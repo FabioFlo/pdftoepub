@@ -1,6 +1,6 @@
-# LeafPress 0.2
+# PdfToEpub converter 0.2
 
-An offline PDF-to-EPUB prototype for reading on small screens. LeafPress is a working name.
+An offline PDF-to-EPUB prototype for reading on small screens. A personal conversion tool.
 
 Ordinary text becomes adjustable XHTML. Reliable tables become HTML tables. Complex tables, mathematical notation, diagrams, scans, and slides use visual fallbacks where necessary. A desktop comparison view and page overrides let you inspect the result before sending it to a reader.
 
@@ -12,7 +12,7 @@ The **Appearance** selector offers **System** (default), **Light**, and **Dark**
 
 ## Start on Windows
 
-1. Extract the ZIP to a normal folder, such as `Documents\LeafPress`. Do not launch files inside the ZIP.
+1. Extract the ZIP to a normal folder, such as `Documents\PdfToEpubConverter`. Do not launch files inside the ZIP.
 2. Install **Python 3.12 or 3.13** if needed, enabling the Python launcher or adding Python to PATH.
 3. Double-click **`setup-windows.bat`** once. Setup downloads the dependencies into a local `.venv`.
 4. Double-click **`start-windows.bat`**.
@@ -21,7 +21,7 @@ The **Appearance** selector offers **System** (default), **Light**, and **Dark**
 
 Python 3.10+ is supported by the source configuration. Setup requires Internet access; preview and conversion run locally without a network service or API key.
 
-The repository contains source, launch scripts, and examples. `build-windows.bat` builds a portable folder **on Windows** using PyInstaller and checks its frozen conversion worker. Keep the entire `dist\LeafPress` folder together. GitHub Actions also verifies Linux, Windows and macOS and produces a **LeafPress-0.2.0-Windows-portable** artifact after successful checks. Download it from a successful run on the [Actions page](https://github.com/FabioFlo/leafpress/actions), extract it and launch `LeafPress.exe`; Python is bundled. The source ZIP itself is not an executable. CI includes the source archive and license notices. Interactive Windows and new Kindle feature trials remain separate from automated checks.
+The repository contains source, launch scripts, and examples. `build-windows.bat` builds a portable folder **on Windows** using PyInstaller and checks its frozen conversion worker. Keep the entire `dist\PdfToEpubConverter` folder together. GitHub Actions also verifies Linux, Windows and macOS and produces a **PdfToEpubConverter-0.2.0-Windows-portable** artifact after successful checks. Download it from a successful run on the [repository’s Actions page](https://github.com/FabioFlo/pdftoepub/actions), extract it and launch `PdfToEpubConverter.exe`; Python is bundled. The source ZIP itself is not an executable. CI includes the source archive and license notices. Interactive Windows and new Kindle feature trials remain separate from automated checks.
 
 Italian instructions: [START_HERE_IT.md](START_HERE_IT.md).
 
@@ -47,7 +47,7 @@ Each export creates:
 | `book.report.json` | Page decisions, review flags, timing, size, and peak process RAM |
 | `book.preview/` | XHTML, CSS, and images used for desktop comparison |
 
-Keep the preview folder while reviewing the book. It can be removed afterward; the EPUB contains its own resources. Reusing an output name replaces its LeafPress sidecars together with the book after conversion completes. Cancellation or a failed conversion keeps the previous complete EPUB. Cancellation is checked between page operations; the GUI stops an unresponsive worker after five seconds.
+Keep the preview folder while reviewing the book. It can be removed afterward; the EPUB contains its own resources. Reusing an output name replaces its PdfToEpub converter sidecars together with the book after conversion completes. Cancellation or a failed conversion keeps the previous complete EPUB. Cancellation is checked between page operations; the GUI stops an unresponsive worker after five seconds.
 
 ## Content preservation and what to inspect
 
@@ -101,19 +101,19 @@ Measurements and their limits are in [docs/BENCHMARKS.md](docs/BENCHMARKS.md). P
 ```bash
 python3 -m venv .venv
 .venv/bin/python -m pip install -e ".[gui]"
-.venv/bin/python -m leafpress gui
+.venv/bin/python -m pdftoepub gui
 ```
 
 On Linux, Qt may need the distribution's XCB/XKB libraries for an interactive desktop. After installation, `start.sh` launches the app. The CLI requires only the base dependency:
 
 ```bash
 python -m pip install -e .
-python -m leafpress convert input.pdf output.epub --language it --preview
-python -m leafpress convert input.pdf output.epub --pages 1-12 --preserve-pages 4,8-9
-python -m leafpress convert input.pdf output.epub --tables image --quality compact
-python -m leafpress convert input.pdf output.epub --profile technical
-python -m leafpress convert input.pdf output.epub --regions areas.json --no-links
-python -m leafpress check output.epub
+python -m pdftoepub convert input.pdf output.epub --language it --preview
+python -m pdftoepub convert input.pdf output.epub --pages 1-12 --preserve-pages 4,8-9
+python -m pdftoepub convert input.pdf output.epub --tables image --quality compact
+python -m pdftoepub convert input.pdf output.epub --profile technical
+python -m pdftoepub convert input.pdf output.epub --regions areas.json --no-links
+python -m pdftoepub check output.epub
 ```
 
 Use `--overwrite` to replace an existing conversion, and Ctrl+C to cancel. `check` performs local ZIP, XML, manifest, spine, resource, and fragment checks. It is not a full conformance checker.
@@ -142,14 +142,14 @@ The verification record in [docs/BENCHMARKS.md](docs/BENCHMARKS.md) distinguishe
 
 | File | Role |
 | --- | --- |
-| `leafpress/extract.py` | Layout, paragraphs, tables, equation and figure crops |
-| `leafpress/epub.py` | Incremental assets, EPUB packaging, structural validation |
-| `leafpress/convert.py` | Bounded preflight, page loop, reports, cancellation and final writes |
-| `leafpress/gui.py` | Desktop settings, comparison preview, page overrides, worker lifecycle |
-| `leafpress/cli.py` | CLI and worker protocol |
-| `leafpress/links.py` | PDF link mapping and destination anchors |
-| `leafpress/page_canvas.py` | Source display and normalized crop selection |
-| `leafpress/profiles.py` | General settings without document edits |
+| `pdftoepub/extract.py` | Layout, paragraphs, tables, equation and figure crops |
+| `pdftoepub/epub.py` | Incremental assets, EPUB packaging, structural validation |
+| `pdftoepub/convert.py` | Bounded preflight, page loop, reports, cancellation and final writes |
+| `pdftoepub/gui.py` | Desktop settings, comparison preview, page overrides, worker lifecycle |
+| `pdftoepub/cli.py` | CLI and worker protocol |
+| `pdftoepub/links.py` | PDF link mapping and destination anchors |
+| `pdftoepub/page_canvas.py` | Source display and normalized crop selection |
+| `pdftoepub/profiles.py` | General settings without document edits |
 | `tests/` | Content preservation, package integrity, rollback, and desktop flow checks |
 | `tools/` | Original fixture generator and reproducible benchmarks |
 

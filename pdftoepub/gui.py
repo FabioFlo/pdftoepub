@@ -46,7 +46,7 @@ def panel():
 class Window(QMainWindow):
     def __init__(self, settings=None):
         super().__init__()
-        self.setWindowTitle("LeafPress - PDF to EPUB")
+        self.setWindowTitle("PdfToEpub converter")
         self.resize(1280, 850)
         self.setMinimumSize(940, 680)
         self.document = None
@@ -57,7 +57,7 @@ class Window(QMainWindow):
         self.page_modes = {}
         self.page_regions = {}
         self.resolved_regions = {}
-        self.settings = settings if settings is not None else QSettings("LeafPress", "LeafPress")
+        self.settings = settings if settings is not None else QSettings("PdfToEpub converter", "PdfToEpub converter")
         self.saved_profiles = {}
         self.open_folder = str(self.settings.value("open_folder", ""))
         self.save_folder = str(self.settings.value("save_folder", ""))
@@ -89,7 +89,7 @@ class Window(QMainWindow):
         main.setSpacing(14)
         header = QHBoxLayout()
         names = QVBoxLayout()
-        names.addWidget(label("LeafPress", "brand"))
+        names.addWidget(label("PdfToEpub converter", "brand"))
         names.addWidget(label("PDF TO EPUB   /   LOCAL & OFFLINE", "eyebrow"))
         header.addLayout(names)
         header.addStretch()
@@ -582,7 +582,7 @@ class Window(QMainWindow):
                 self.save_folder = str(Path(self.output_edit.text()).resolve().parent)
             self._save_settings()
             if preview:
-                job = tempfile.TemporaryDirectory(prefix="leafpress-preview-")
+                job = tempfile.TemporaryDirectory(prefix="pdftoepub-preview-")
                 output = Path(job.name) / "preview.epub"
                 overwrite = False
             else:
@@ -595,12 +595,12 @@ class Window(QMainWindow):
                     raise ValueError("Input and output must be different files.")
                 overwrite = any(path.exists() for path in [output, output.with_suffix(".report.json"), output.with_suffix(".preview")])
                 if overwrite and QMessageBox.question(self, "Replace conversion?",
-                        "Replace the existing EPUB and its LeafPress report/preview?",
+                        "Replace the existing EPUB and its PdfToEpub converter report/preview?",
                         QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                         QMessageBox.StandardButton.No) != QMessageBox.StandardButton.Yes:
                     return
                 output.parent.mkdir(parents=True, exist_ok=True)
-                job = tempfile.TemporaryDirectory(prefix=".leafpress-job-", dir=output.parent)
+                job = tempfile.TemporaryDirectory(prefix=".pdftoepub-job-", dir=output.parent)
             # Keep only the most recent preview; no accumulating raster cache.
             self.preview_root = None
             self.book_view.clear()
@@ -622,7 +622,7 @@ class Window(QMainWindow):
                 arguments = ["worker", str(config_path)]
             else:
                 program = sys.executable
-                arguments = ["-m", "leafpress", "worker", str(config_path)]
+                arguments = ["-m", "pdftoepub", "worker", str(config_path)]
                 self.process.setWorkingDirectory(str(Path(__file__).resolve().parent.parent))
             self.process.setProgram(program)
             self.process.setArguments(arguments)
@@ -769,7 +769,7 @@ class Window(QMainWindow):
 
 def main():
     app = QApplication.instance() or QApplication(sys.argv[:1])
-    app.setApplicationName("LeafPress")
+    app.setApplicationName("PdfToEpub converter")
     app.setStyle("Fusion")
     window = Window()
     window.show()

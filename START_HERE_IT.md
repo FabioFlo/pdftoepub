@@ -1,8 +1,8 @@
-# LeafPress 0.2 - Primo avvio
+# PdfToEpub converter 0.2 - Primo avvio
 
 Il prototipo converte i PDF in EPUB sul tuo computer. Mantiene il testo adattabile quando possibile e conserva tabelle complesse, formule, diagrammi e slide tramite immagini ritagliate.
 
-1. Estrai lo ZIP in una cartella normale, per esempio `Documenti\LeafPress`.
+1. Estrai lo ZIP in una cartella normale, per esempio `Documenti\PdfToEpubConverter`.
 2. Se non lo hai, installa **Python 3.12 o 3.13** dal sito ufficiale, abilitando il launcher o l'opzione per aggiungerlo al PATH.
 3. Esegui **`setup-windows.bat`** una volta. Serve Internet per scaricare le dipendenze.
 4. Esegui **`start-windows.bat`**. Le conversioni successive sono locali e non richiedono un servizio online.
@@ -10,7 +10,7 @@ Il prototipo converte i PDF in EPUB sul tuo computer. Mantiene il testo adattabi
 6. Seleziona pagina 2 e premi **Preview page** per confrontare la tabella.
 7. Scegli la destinazione e premi **Create EPUB**.
 
-Il repository contiene i sorgenti e gli script. `build-windows.bat` crea una cartella applicazione su Windows e verifica il processo di conversione compilato. GitHub Actions genera anche **LeafPress-0.2.0-Windows-portable** dopo i test: scaricalo da una esecuzione riuscita nella pagina Actions, estrailo e apri `LeafPress.exe`. Mantieni tutta la cartella insieme; include Python. Lo ZIP dei sorgenti non è un eseguibile. I controlli automatici non sostituiscono la prova pratica dell'interfaccia su Windows.
+Il repository contiene i sorgenti e gli script. `build-windows.bat` crea una cartella applicazione su Windows e verifica il processo di conversione compilato. GitHub Actions genera anche **PdfToEpubConverter-0.2.0-Windows-portable** dopo i test: scaricalo da una esecuzione riuscita nella pagina Actions, estrailo e apri `PdfToEpubConverter.exe`. Mantieni tutta la cartella insieme; include Python. Lo ZIP dei sorgenti non è un eseguibile. I controlli automatici non sostituiscono la prova pratica dell'interfaccia su Windows.
 
 ## Impostazioni utili
 

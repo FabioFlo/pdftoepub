@@ -2,6 +2,8 @@
 
 ## 0.2.0 - 2026-10-01
 
+- Rename the personal tool to PdfToEpub converter, including package/CLI, portable executable, sample content, screenshots and build artifacts. New-name application settings start with defaults.
+
 - Add remembered System / Light / Dark appearance, live system changes, consistent menu/control contrast, clearer layout guidance and completion status. Document previews retain original colours.
 
 - Restore existing internal PDF links and HTTP/HTTPS/mailto links, retaining text formatting and nearby block destinations. Visual content has adjacent clickable entries.

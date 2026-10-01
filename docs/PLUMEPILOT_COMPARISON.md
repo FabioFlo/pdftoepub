@@ -1,10 +1,10 @@
-# LeafPress and PlumePilot EPUB conversion
+# PdfToEpub converter and PlumePilot EPUB conversion
 
-Reviewed 2026-10-01 against PlumePilot main `epub-core.mjs` blob `4fb453c79eebd88023088652dbd5d9fc7fa8b3ad` and `docs/epub-fidelity.md`. Read-only analysis: this PR changes LeafPress only.
+Reviewed 2026-10-01 against PlumePilot main `epub-core.mjs` blob `4fb453c79eebd88023088652dbd5d9fc7fa8b3ad` and `docs/epub-fidelity.md`. Read-only analysis: this PR changes PdfToEpub converter only.
 
 ## Why the outputs differ
 
-| Behavior | PlumePilot | LeafPress |
+| Behavior | PlumePilot | PdfToEpub converter |
 | --- | --- | --- |
 | Complex maths/tables/diagrams | Whole page becomes visual blocks | Difficult regions become crops; surrounding prose reflows |
 | Simple ruled tables | Visual preservation | Reliable grids become HTML |
@@ -12,11 +12,11 @@ Reviewed 2026-10-01 against PlumePilot main `epub-core.mjs` blob `4fb453c79eebd8
 | Image encoding | Already selects PNG/JPEG and avoids ZIP recompression | PNG crops with digest-based reuse |
 | Long export | Browser memory and JSZip assembly | Incremental disk-backed assets and ZIP writes |
 
-These are code-path differences in `pageNeedsVisual`, `renderVisualBlocks`, `pdfToXhtml` and packaging, not evidence that replacing PDF.js alone would produce LeafPress's result. Engine rendering and layout reconstruction both matter.
+These are code-path differences in `pageNeedsVisual`, `renderVisualBlocks`, `pdfToXhtml` and packaging, not evidence that replacing PDF.js alone would produce PdfToEpub converter's result. Engine rendering and layout reconstruction both matter.
 
-Recorded runs on the same named study PDFs illustrate the size difference. PlumePilot figures come from its September 22 fidelity record; LeafPress figures are the October 1 v0.2 Linux run. This is not a new side-by-side browser/device benchmark.
+Recorded runs on the same named study PDFs illustrate the size difference. PlumePilot figures come from its September 22 fidelity record; PdfToEpub converter figures are the October 1 v0.2 Linux run. This is not a new side-by-side browser/device benchmark.
 
-| Input | PlumePilot recorded EPUB bytes | LeafPress v0.2 EPUB bytes |
+| Input | PlumePilot recorded EPUB bytes | PdfToEpub converter v0.2 EPUB bytes |
 | --- | ---: | ---: |
 | RelIns_Pegaso.pdf | 7,777,697 | 1,926,272 |
 | IntProSof_Pegaso.pdf | 4,789,204 | 1,912,813 |
@@ -26,7 +26,7 @@ Recorded runs on the same named study PDFs illustrate the size difference. Plume
 1. **Conservative region crops.** Use PDF.js text/operator coordinates to isolate maths, tables and figures and reflow adjacent prose. Keep whole-page fallback when grouping is ambiguous; fractions, superscripts, labels and arrows must stay complete.
 2. **Reuse repeated assets.** Hash encoded crops and reuse manifest entries across pages/materials. Whole-page rasterization creates few identical images to reuse.
 3. **Simple HTML grids.** Add a first-party geometric detector after regional behavior is reliable. The PyMuPDF table detector is not directly available in the existing PDF.js pipeline, so this requires implementation and tests.
-4. **Measure course-export RAM.** Inspect intermediate canvases, assets and ZIP assembly. Encoded assets and final download bytes can coexist in browser memory. Matching LeafPress's disk-backed behavior would need a separate cross-browser streaming design.
+4. **Measure course-export RAM.** Inspect intermediate canvases, assets and ZIP assembly. Encoded assets and final download bytes can coexist in browser memory. Matching PdfToEpub converter's disk-backed behavior would need a separate cross-browser streaming design.
 
 PNG/JPEG selection and storing compressed images are already implemented. Lowering resolution alone sacrifices the formula detail protected by the previous fidelity update.
 

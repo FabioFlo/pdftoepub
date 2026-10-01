@@ -75,8 +75,8 @@ def convert(source: str | Path, output: str | Path, options: Options | None = No
     preview_path = output.with_suffix(".preview")
     if not overwrite and (output.exists() or report_path.exists() or (preview and preview_path.exists())):
         raise FileExistsError("Output artifacts already exist. Choose another name or enable overwrite.")
-    if preview and preview_path.exists() and not (preview_path / ".leafpress-preview").is_file():
-        raise ValueError("The preview destination is not a LeafPress preview. Choose another output name.")
+    if preview and preview_path.exists() and not (preview_path / ".pdftoepub-preview").is_file():
+        raise ValueError("The preview destination is not a PdfToEpub converter preview. Choose another output name.")
     output.parent.mkdir(parents=True, exist_ok=True)
     if staging_parent is not None:
         staging_parent = Path(staging_parent).resolve()
@@ -114,7 +114,7 @@ def convert(source: str | Path, output: str | Path, options: Options | None = No
             notify({"type": "status", "message": "Mapping PDF links to EPUB destinations..."})
             link_map = LinkMap(document, selected, cancelled)
         page_summaries = []
-        with tempfile.TemporaryDirectory(prefix=".leafpress-", dir=staging_parent or output.parent) as temporary:
+        with tempfile.TemporaryDirectory(prefix=".pdftoepub-", dir=staging_parent or output.parent) as temporary:
             temporary = Path(temporary)
             epub_temp = temporary / "book.epub"
             root = temporary / "preview"
@@ -150,7 +150,7 @@ def convert(source: str | Path, output: str | Path, options: Options | None = No
             validation = validate_epub(epub_temp)
             elapsed = round(time.perf_counter() - started, 3)
             report = {
-                "application": "LeafPress", "version": __version__,
+                "application": "PdfToEpub converter", "version": __version__,
                 "created_utc": datetime.now(timezone.utc).isoformat(),
                 "input": source.name, "input_bytes": source.stat().st_size,
                 "output": output.name, "output_bytes": epub_temp.stat().st_size,

@@ -2,7 +2,7 @@
 
 This original three-page fixture exercises actual PDF links, not inferred printed references.
 
-1. Source page 1 links to the section heading and note on page 2 and to the LeafPress website. The section and note should land at different reconstructed blocks.
+1. Source page 1 links to the section heading and note on page 2 and to the PdfToEpub converter website. The section and note should land at different reconstructed blocks.
 2. Source page 2 has separate links back to the reference on page 1. These are ordinary hyperlinks, without inferred popup-note behavior.
 3. Source page 3 is a preserved landscape image, followed by an available clickable website entry.
 4. The contents menu nests "Linked section" under "Reading and navigation" and keeps "Preserved slide" at the top level.

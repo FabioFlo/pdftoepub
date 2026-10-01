@@ -1,8 +1,8 @@
-# LeafPress project context
+# PdfToEpub converter project context
 
-Date: 2026-10-01. Version: 0.2.0. Working name: LeafPress.
+Date: 2026-10-01. Version: 0.2.0. Name: PdfToEpub converter.
 
-Flo wants local PDF-to-EPUB conversion with useful table/formula preservation and sensible memory use, particularly for Kindle. Standalone, independent of PlumePilot. Repository: https://github.com/FabioFlo/leafpress.
+Flo wants local PDF-to-EPUB conversion with useful table/formula preservation and sensible memory use, particularly for Kindle. Standalone, independent of PlumePilot. Repository: https://github.com/FabioFlo/pdftoepub.
 
 ## User validation and release scope
 
@@ -13,6 +13,10 @@ Keep Hybrid / Balanced / Auto as the default. v0.2 adds actual internal PDF link
 Manual selections use normalized displayed-page bounds. Intersecting lines/tables/equations/figures are included whole; overlapping selections merge. The preview/report show final `region_bounds`. Document edits reset on opening another PDF and do not enter general profiles. CLI flags expose profiles, region JSON and link omission.
 
 GitHub Actions verifies Linux/Windows/macOS and builds a portable Windows folder with a frozen-worker check, source archive and notices. Workflow results remain separate from interactive Windows GUI validation. Linux peak measurements use VmHWM to exclude pre-exec parent memory; large raster fixture generation runs separately from benchmark measurement launchers.
+
+## Naming
+
+Flo chose the simple personal-tool name **PdfToEpub converter**. The repository is `FabioFlo/pdftoepub`; Python module and CLI are `pdftoepub`, distribution is `pdf-to-epub-converter`, and Windows executable is `PdfToEpubConverter.exe`. Active code, documentation, sample PDFs/EPUBs, previews and screenshots use this name. The new application settings namespace starts with default preferences on first launch. Git history and previous build artifacts are historical.
 
 ## Appearance and size feedback
 
@@ -32,7 +36,7 @@ OCR, inferred links from plain reference text, popup-note semantics, semantic fo
 
 ## PlumePilot comparison
 
-Flo asked whether the extension can benefit from the quality/size improvements. PlumePilot main uses PDF.js/JSZip and renders entire complex pages as visual blocks. It already selects PNG/JPEG and bounds canvases. LeafPress's region crops, adjustable surrounding prose, HTML grids and asset reuse explain much of the gap. See read-only `docs/PLUMEPILOT_COMPARISON.md` for source references and a feasible JavaScript improvement path. The native Python engine cannot simply be copied into the extension. No PlumePilot code/branch change is part of this PR.
+Flo asked whether the extension can benefit from the quality/size improvements. PlumePilot main uses PDF.js/JSZip and renders entire complex pages as visual blocks. It already selects PNG/JPEG and bounds canvases. PdfToEpub converter's region crops, adjustable surrounding prose, HTML grids and asset reuse explain much of the gap. See read-only `docs/PLUMEPILOT_COMPARISON.md` for source references and a feasible JavaScript improvement path. The native Python engine cannot simply be copied into the extension. No PlumePilot code/branch change is part of this PR.
 
 ## Next work
 

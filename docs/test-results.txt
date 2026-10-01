@@ -24,6 +24,8 @@ test_drag_region_preserves_table_in_real_worker (test_gui.GuiTests.test_drag_reg
 test_export_and_reopen_pages (test_gui.GuiTests.test_export_and_reopen_pages) ... ok
 test_preview_table_and_page_override_in_real_worker (test_gui.GuiTests.test_preview_table_and_page_override_in_real_worker) ... ok
 test_saved_preferences_and_profiles_exclude_document_edits (test_gui.GuiTests.test_saved_preferences_and_profiles_exclude_document_edits) ... ok
+test_system_theme_updates_only_when_system_is_selected (test_gui.GuiTests.test_system_theme_updates_only_when_system_is_selected) ... ok
+test_theme_choice_restores_without_changing_conversion_options (test_gui.GuiTests.test_theme_choice_restores_without_changing_conversion_options) ... ok
 test_fork_parent_high_water_does_not_inflate_exec_worker (test_memory.MemoryTests.test_fork_parent_high_water_does_not_inflate_exec_worker) ... ok
 test_bookmark_hierarchy_is_retained (test_navigation_regions.NavigationRegionTests.test_bookmark_hierarchy_is_retained) ... ok
 test_disable_link_preservation (test_navigation_regions.NavigationRegionTests.test_disable_link_preservation) ... ok
@@ -38,7 +40,7 @@ test_preserved_page_links_remain_available (test_navigation_regions.NavigationRe
 test_profiles_do_not_include_document_specific_edits (test_navigation_regions.NavigationRegionTests.test_profiles_do_not_include_document_specific_edits) ... ok
 
 ----------------------------------------------------------------------
-Ran 38 tests in 4.915s
+Ran 40 tests in 5.965s
 
 OK
 Consider using the pymupdf_layout package for a greatly improved page layout analysis.

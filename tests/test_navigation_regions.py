@@ -8,10 +8,10 @@ import zipfile
 
 import pymupdf
 
-from leafpress.convert import convert
-from leafpress.epub import validate_epub
-from leafpress.model import Options
-from leafpress.profiles import checked_preferences, preferences
+from pdftoepub.convert import convert
+from pdftoepub.epub import validate_epub
+from pdftoepub.model import Options
+from pdftoepub.profiles import checked_preferences, preferences
 
 
 XHTML = "{http://www.w3.org/1999/xhtml}"

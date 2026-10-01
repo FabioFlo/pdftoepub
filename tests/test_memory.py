@@ -10,7 +10,7 @@ import unittest
                      "Linux VmHWM regression")
 class MemoryTests(unittest.TestCase):
     def test_fork_parent_high_water_does_not_inflate_exec_worker(self):
-        child = ('import json,resource; from leafpress.convert import peak_memory_mib; '
+        child = ('import json,resource; from pdftoepub.convert import peak_memory_mib; '
                  'print(json.dumps({"worker":peak_memory_mib(),'
                  '"inherited":resource.getrusage(resource.RUSAGE_SELF).ru_maxrss/1024}))')
         parent = ("import os,sys; allocation=bytearray(128*1024*1024); pid=os.fork(); "

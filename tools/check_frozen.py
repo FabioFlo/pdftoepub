@@ -7,8 +7,8 @@ from pathlib import Path
 import subprocess
 import tempfile
 
-from leafpress.epub import validate_epub
-from leafpress.model import Options
+from pdftoepub.epub import validate_epub
+from pdftoepub.model import Options
 
 
 def main():
@@ -16,7 +16,7 @@ def main():
     parser.add_argument("executable", type=Path)
     parser.add_argument("pdf", type=Path)
     args = parser.parse_args()
-    with tempfile.TemporaryDirectory(prefix="leafpress-frozen-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="pdftoepub-frozen-") as temporary:
         root = Path(temporary)
         output = root / "result.epub"
         events = root / "events.jsonl"

@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "leafpress"
+name = "pdf-to-epub-converter"
 version = "0.2.0"
 description = "Offline PDF to EPUB converter with reflowable text and visual fallbacks"
 requires-python = ">=3.10"
@@ -15,11 +15,11 @@ demo = ["reportlab>=4,<5", "Pillow>=10,<13"]
 build = ["pyinstaller>=6,<7"]
 
 [project.scripts]
-leafpress = "leafpress.cli:main"
+pdftoepub = "pdftoepub.cli:main"
 
 [project.gui-scripts]
-leafpress-gui = "leafpress.gui:main"
+pdftoepub-gui = "pdftoepub.gui:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["leafpress*"]
+include = ["pdftoepub*"]

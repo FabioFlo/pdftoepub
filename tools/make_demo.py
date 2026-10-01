@@ -19,8 +19,8 @@ from reportlab.platypus import Table, TableStyle
 def build_demo(path: Path):
     path.parent.mkdir(parents=True, exist_ok=True)
     c = canvas.Canvas(str(path), pagesize=A4, pageCompression=1)
-    c.setTitle("LeafPress conversion lab")
-    c.setAuthor("LeafPress")
+    c.setTitle("PdfToEpub converter conversion lab")
+    c.setAuthor("PdfToEpub converter")
     width, height = A4
     # Symbol cannot encode ordinary Latin x reliably. A regular font is a safe
     # fallback; Cambria Math is used if the optional font is available locally.
@@ -41,7 +41,7 @@ def build_demo(path: Path):
         w, h = page_size
         c.setFillColor(colors.HexColor("#486663"))
         c.setFont("Helvetica", 9)
-        c.drawString(48, h - 33, "LEAFPRESS / CONVERSION LAB")
+        c.drawString(48, h - 33, "PDF TO EPUB CONVERTER / CONVERSION LAB")
         c.drawRightString(w - 48, 30, f"Page {number} of 7")
         c.setFillColor(colors.HexColor("#1e4740"))
         c.setFont("Helvetica-Bold", 23)
@@ -76,7 +76,7 @@ def build_demo(path: Path):
         return y - th
 
     frame(1, "A readable page")
-    y = paragraph("This document is an original test fixture for LeafPress. The paragraphs on this page should remain adjustable text in the EPUB. Change the reader font size to check that sentences wrap naturally.")
+    y = paragraph("This document is an original test fixture for PdfToEpub converter. The paragraphs on this page should remain adjustable text in the EPUB. Change the reader font size to check that sentences wrap naturally.")
     y = paragraph("The following pages exercise simple tables, merged cells, mathematical notation, vector diagrams, columns, a scanned page, and a slide. This is a controlled sample; real PDFs will have more varied layouts.", y=y - 28)
     c.setFont("Helvetica-Bold", 15)
     c.drawString(48, y - 38, "What to inspect")

@@ -1,4 +1,4 @@
-name: Verify and build LeafPress
+name: Verify and build PdfToEpub converter
 
 on:
   pull_request:
@@ -37,17 +37,17 @@ jobs:
           python-version: '3.12'
           cache: pip
       - run: python -m pip install -e ".[gui,build]"
-      - run: python -m PyInstaller --noconfirm --clean --onedir --windowed --name LeafPress --collect-all pymupdf --hidden-import leafpress.gui launcher.py
-      - run: python tools/check_frozen.py dist/LeafPress/LeafPress.exe examples/conversion-lab.pdf
+      - run: python -m PyInstaller --noconfirm --clean --onedir --windowed --name PdfToEpubConverter --collect-all pymupdf --hidden-import pdftoepub.gui launcher.py
+      - run: python tools/check_frozen.py dist/PdfToEpubConverter/PdfToEpubConverter.exe examples/conversion-lab.pdf
       - name: Include source and notices
         shell: pwsh
         run: |
-          Copy-Item LICENSE,THIRD_PARTY_NOTICES.md,START_HERE_IT.md -Destination dist/LeafPress
-          Copy-Item examples -Destination dist/LeafPress/examples -Recurse
-      - run: python tools/package_source.py dist/LeafPress/LeafPress-source.zip
+          Copy-Item LICENSE,THIRD_PARTY_NOTICES.md,START_HERE_IT.md -Destination dist/PdfToEpubConverter
+          Copy-Item examples -Destination dist/PdfToEpubConverter/examples -Recurse
+      - run: python tools/package_source.py dist/PdfToEpubConverter/PdfToEpubConverter-source.zip
       - uses: actions/upload-artifact@v4
         with:
-          name: LeafPress-0.2.0-Windows-portable
-          path: dist/LeafPress
+          name: PdfToEpubConverter-0.2.0-Windows-portable
+          path: dist/PdfToEpubConverter
           if-no-files-found: error
           retention-days: 30

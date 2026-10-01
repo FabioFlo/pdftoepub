@@ -56,7 +56,7 @@ def _worker(config_path: str) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="LeafPress: offline PDF to EPUB conversion")
+    parser = argparse.ArgumentParser(description="PdfToEpub converter: offline PDF to EPUB conversion")
     parser.add_argument("--version", action="version", version=__version__)
     commands = parser.add_subparsers(dest="command")
     commands.add_parser("gui", help="Open the desktop app")
@@ -103,7 +103,7 @@ def main(argv=None) -> int:
         except Exception as exc:
             print(str(exc), file=sys.stderr)
             return 1
-    with tempfile.TemporaryDirectory(prefix="leafpress-cancel-") as temp:
+    with tempfile.TemporaryDirectory(prefix="pdftoepub-cancel-") as temp:
         cancel_path = Path(temp) / "cancel"
         previous = signal.getsignal(signal.SIGINT)
         signal.signal(signal.SIGINT, lambda _signal, _frame: cancel_path.touch())

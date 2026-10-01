@@ -1,13 +1,13 @@
 {
-  "application": "LeafPress",
+  "application": "PdfToEpub converter",
   "version": "0.2.0",
-  "created_utc": "2026-10-01T10:18:39.073303+00:00",
+  "created_utc": "2026-10-01T14:35:43.264377+00:00",
   "input": "conversion-lab.pdf",
-  "input_bytes": 56207,
+  "input_bytes": 56270,
   "output": "conversion-lab.epub",
-  "output_bytes": 200731,
-  "title": "LeafPress conversion lab",
-  "author": "LeafPress",
+  "output_bytes": 203850,
+  "title": "PdfToEpub converter conversion lab",
+  "author": "PdfToEpub converter",
   "source_pages": 7,
   "converted_pages": 7,
   "options": {
@@ -24,8 +24,8 @@
     "preserve_links": true,
     "page_regions": {}
   },
-  "elapsed_seconds": 0.324,
-  "peak_process_mib": 64.08,
+  "elapsed_seconds": 0.389,
+  "peak_process_mib": 62.62,
   "memory_scope": "conversion process including Python/native PDF engine; GUI excluded",
   "platform": "linux",
   "pymupdf_version": "1.26.6",
@@ -38,7 +38,7 @@
     "full_epubcheck": false
   },
   "totals": {
-    "text_characters": 2455,
+    "text_characters": 2465,
     "html_tables": 1,
     "table_images": 1,
     "images": 3,
@@ -58,7 +58,7 @@
       "label": "1",
       "title": "A readable page",
       "mode": "hybrid",
-      "text_characters": 628,
+      "text_characters": 638,
       "html_tables": 0,
       "table_images": 0,
       "images": 0,

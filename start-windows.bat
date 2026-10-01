@@ -6,5 +6,5 @@ if not exist ".venv\Scripts\python.exe" (
     pause
     exit /b 1
 )
-".venv\Scripts\python.exe" -m leafpress gui
+".venv\Scripts\python.exe" -m pdftoepub gui
 if errorlevel 1 pause

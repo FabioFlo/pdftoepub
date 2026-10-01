@@ -43,7 +43,7 @@ def main():
     summaries = []
     for position, pdf in enumerate(pdfs, 1):
         output = args.output_dir / f"{position:02d}-{pdf.stem}.epub"
-        run = subprocess.run([sys.executable, "-m", "leafpress", "convert", str(pdf.resolve()),
+        run = subprocess.run([sys.executable, "-m", "pdftoepub", "convert", str(pdf.resolve()),
                               str(output.resolve()), "--overwrite"], cwd=project,
                              capture_output=True, text=True, encoding="utf-8", errors="replace")
         if run.returncode:

@@ -187,7 +187,7 @@ class EpubWriter:
                     '<item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>'
                     '<item id="css" href="styles/book.css" media-type="text/css"/>'
                     f'{pages}{assets}</manifest><spine toc="ncx">{spine}</spine></package>')
-        (self.root / ".leafpress-preview").write_text("LeafPress preview v1\n", encoding="utf-8")
+        (self.root / ".pdftoepub-preview").write_text("PdfToEpub converter preview v1\n", encoding="utf-8")
 
 
 def validate_epub(path: Path) -> dict:

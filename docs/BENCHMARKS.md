@@ -1,4 +1,4 @@
-# Verification record - LeafPress 0.2.0
+# Verification record - PdfToEpub converter 0.2.0
 
 Date: 2026-10-01. Reference environment: Linux x86_64, Python 3.12, PyMuPDF 1.26.6, PySide6 Essentials 6.10.3. GUI checks use Qt offscreen.
 
@@ -46,3 +46,6 @@ python tools/benchmark.py /path/to/your-document.pdf
 python tools/make_navigation_demo.py
 java -jar /path/to/epubcheck.jar examples/navigation-lab.epub
 ```
+
+
+Naming update: all 40 checks pass using the `pdftoepub` package. Both regenerated samples pass EPUBCheck 5.3.0 with zero errors and warnings. The renamed wheel builds and contains only the new package namespace. Sample PDF/EPUB content and metadata were scanned for the former name, and screenshots were regenerated from the renamed application. Previous benchmark numbers above describe their original runs.

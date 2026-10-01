@@ -11,7 +11,7 @@ try:
     from PySide6.QtCore import QPoint, QSettings, QTimer, Qt
     from PySide6.QtTest import QTest
     from PySide6.QtWidgets import QApplication
-    from leafpress.gui import STYLE, Window
+    from pdftoepub.gui import STYLE, Window
     HAS_QT = True
 except ImportError:
     HAS_QT = False
@@ -68,7 +68,7 @@ class GuiTests(unittest.TestCase):
 
     def test_system_theme_updates_only_when_system_is_selected(self):
         from unittest.mock import patch
-        from leafpress.themes import resolve_theme
+        from pdftoepub.themes import resolve_theme
         self.assertEqual(resolve_theme("system", Qt.ColorScheme.Dark), "dark")
         self.assertEqual(resolve_theme("system", Qt.ColorScheme.Light), "light")
         self.assertEqual(resolve_theme("system", Qt.ColorScheme.Unknown), "light")
@@ -111,7 +111,7 @@ class GuiTests(unittest.TestCase):
             self.window.cancel()
             self.wait_for_worker()
             self.assertFalse(output.exists())
-            self.assertFalse(list(Path(temp).glob(".leafpress-*")))
+            self.assertFalse(list(Path(temp).glob(".pdftoepub-*")))
             self.assertIn("Cancelled", self.window.status.text())
 
     def test_drag_region_preserves_table_in_real_worker(self):
@@ -140,7 +140,7 @@ class GuiTests(unittest.TestCase):
         self.window.profile.setCurrentIndex(self.window.profile.findData("compact"))
         self.window.preserve_links.setChecked(False)
         self.window.page_regions = {1: [[.1, .1, .4, .4]]}
-        with patch("leafpress.gui.QInputDialog.getText", return_value=("My Kindle", True)):
+        with patch("pdftoepub.gui.QInputDialog.getText", return_value=("My Kindle", True)):
             self.window.save_profile()
         self.window.close()
         restored = Window(self.settings)
