@@ -1,7 +1,7 @@
 @echo off
 setlocal
 cd /d "%~dp0"
-echo Setting up LeafPress. The first setup downloads Python dependencies.
+echo Setting up PdfToEpub converter. The first setup downloads Python dependencies.
 where py >nul 2>nul
 if not errorlevel 1 (
     py -3 -c "import sys; assert sys.version_info >= (3,10)" >nul 2>nul
@@ -20,7 +20,7 @@ if errorlevel 1 goto failed
 ".venv\Scripts\python.exe" -m pip install -e ".[gui]"
 if errorlevel 1 goto failed
 echo.
-echo Setup complete. Double-click start-windows.bat to open LeafPress.
+echo Setup complete. Double-click start-windows.bat to open PdfToEpub converter.
 pause
 exit /b 0
 

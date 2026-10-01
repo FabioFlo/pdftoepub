@@ -10,9 +10,9 @@ import zipfile
 
 import pymupdf
 
-from leafpress.convert import ConversionCancelled, convert
-from leafpress.epub import validate_epub
-from leafpress.model import Options, select_pages
+from pdftoepub.convert import ConversionCancelled, convert
+from pdftoepub.epub import validate_epub
+from pdftoepub.model import Options, select_pages
 
 
 PROJECT = Path(__file__).resolve().parents[1]
@@ -117,7 +117,7 @@ class ConversionTests(unittest.TestCase):
         output = self.root / "single.epub"
         report = convert(DEMO, output, Options(pages="2"))
         self.assertEqual(report["converted_pages"], 1)
-        self.assertNotIn("LEAFPRESS / CONVERSION LAB", body_text(output, 2))
+        self.assertNotIn("PDF TO EPUB CONVERTER / CONVERSION LAB", body_text(output, 2))
         self.assertEqual(report["pages"][0]["removed_margin_lines"], self.report["pages"][1]["removed_margin_lines"])
 
     def test_page_override_and_original_page_numbers(self):
@@ -136,7 +136,7 @@ class ConversionTests(unittest.TestCase):
     def test_keep_margins_option(self):
         output = self.root / "margins.epub"
         convert(DEMO, output, Options(pages="2", remove_margins=False))
-        self.assertIn("LEAFPRESS / CONVERSION LAB", body_text(output, 2))
+        self.assertIn("PDF TO EPUB CONVERTER / CONVERSION LAB", body_text(output, 2))
 
     def test_repeated_footer_image_removed_but_distinct_image_kept(self):
         source = self.root / "footer-images.pdf"
@@ -189,7 +189,7 @@ class ConversionTests(unittest.TestCase):
                 convert(DEMO, output, overwrite=True, preview=True, cancel_file=cancel, progress=progress)
             after = {str(p.relative_to(root)): p.read_bytes() for p in root.rglob("*") if p.is_file() and p != cancel}
             self.assertEqual(before, after)
-            self.assertFalse(list(root.glob(".leafpress-*")))
+            self.assertFalse(list(root.glob(".pdftoepub-*")))
 
     def test_cancel_during_sidecar_install_rolls_back(self):
         import os
@@ -207,7 +207,7 @@ class ConversionTests(unittest.TestCase):
                     cancel.touch()
                 return result
 
-            with patch("leafpress.convert.os.replace", side_effect=replace):
+            with patch("pdftoepub.convert.os.replace", side_effect=replace):
                 with self.assertRaises(ConversionCancelled):
                     convert(DEMO, output, Options(pages="2"), overwrite=True, preview=True, cancel_file=cancel)
             after = {str(p.relative_to(root)): p.read_bytes() for p in root.rglob("*") if p.is_file() and p != cancel}

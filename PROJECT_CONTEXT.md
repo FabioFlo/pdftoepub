@@ -1,38 +1,48 @@
-# LeafPress project context
+# PdfToEpub converter project context
 
-Date: 2026-09-30. Version: 0.1.0. Working name: LeafPress.
+Date: 2026-10-01. Version: 0.2.0. Name: PdfToEpub converter.
 
-Flo wants a local PDF-to-EPUB converter with useful table/formula preservation and sensible memory use, particularly for Kindle reading. This is a standalone project, independent of PlumePilot.
+Flo wants local PDF-to-EPUB conversion with useful table/formula preservation and sensible memory use, particularly for Kindle. Standalone, independent of PlumePilot. Repository: https://github.com/FabioFlo/pdftoepub.
 
-## Current implementation
+## User validation and release scope
 
-- Python conversion engine with PyMuPDF, using the tested 1.26.x API.
-- PySide6 Essentials GUI, using a lightweight QTextBrowser comparison view.
-- Separate conversion worker with UTF-8 JSON events on disk, so a windowed frozen executable does not depend on stdout.
-- Adjustable XHTML paragraphs, inferred headings, and simple ruled HTML tables.
-- Image preservation for merged/wide/mathematical/uncertain tables, grouped equations, inline mathematical spans, and connected vector diagrams.
-- Automatic page-image fallbacks for scans, sparse raster pages, slides, rotated text, and reconstruction failures.
-- Bounded 24-page preflight, one-page extraction, incremental ZIP writes, duplicate image reuse, raster caps, and MuPDF cache clearing.
-- Global mode plus source-page overrides; page range selection; metadata editing; language selection.
-- Reports with page decisions, warnings, timing, output size, and peak worker RAM.
-- Staged publication and sidecar rollback; cooperative cancellation plus GUI worker timeout.
-- Windows setup/start/build scripts and a source launcher for macOS/Linux.
-- Original seven-page PDF/EPUB fixture, source generator, meaningful conversion tests, and desktop worker smoke checks.
+On 2026-10-01 Flo reported reading v0.1 output on Kindle: satisfying quality/size, correctly preserved mathematical notation and usable table zoom. This is user-reported validation of the original baseline, not a device trial of the new features. Flo authorized v0.2 and its PR in the new public repository.
 
-## Verification and present limits
+Keep Hybrid / Balanced / Auto as the default. v0.2 adds actual internal PDF links to nearby block anchors, HTTP/HTTPS/mailto links, adjacent links for visual content, nested bookmark navigation, manual region preservation and saved profiles/settings/folders. Existing note/reference links remain ordinary internal links; popup-note semantics are not inferred. Excluded targets and unsupported/invalid actions are omitted and reported.
 
-See `docs/BENCHMARKS.md` for exact final metrics and validation. Desktop checks use Linux/Qt offscreen. A native Windows executable is not included or claimed to have been tested. No device-level Kindle result has been verified yet.
+Manual selections use normalized displayed-page bounds. Intersecting lines/tables/equations/figures are included whole; overlapping selections merge. The preview/report show final `region_bounds`. Document edits reset on opening another PDF and do not enter general profiles. CLI flags expose profiles, region JSON and link omission.
 
-The memory design reduces growth with document length; it does not enforce a total RAM quota for arbitrary source PDF decoding. Reading order, paragraph reconstruction, table boundaries, and equation detection are heuristics. The desktop preview approximates EPUB rendering. Repeated margins are optional; page images always retain the original page.
+GitHub Actions verifies Linux/Windows/macOS and builds a portable Windows folder with a frozen-worker check, source archive and notices. Workflow results remain separate from interactive Windows GUI validation. Linux peak measurements use VmHWM to exclude pre-exec parent memory; large raster fixture generation runs separately from benchmark measurement launchers.
 
-OCR, internal/external hyperlink reconstruction, semantic footnotes, table editing, region-level manual overrides, and reliable layouts beyond two columns remain future work. Borderless table detection is experimental. Ordinary text uses reader fonts; source font embedding is not implemented.
+## Naming
 
-## Next useful work
+Flo chose the simple personal-tool name **PdfToEpub converter**. The repository is `FabioFlo/pdftoepub`; Python module and CLI are `pdftoepub`, distribution is `pdf-to-epub-converter`, and Windows executable is `PdfToEpubConverter.exe`. Active code, documentation, sample PDFs/EPUBs, previews and screenshots use this name. The new application settings namespace starts with default preferences on first launch. Git history and previous build artifacts are historical.
 
-1. Test the shipped EPUB and a few representative conversions on Flo's Kindle through Send to Kindle.
-2. Try `setup-windows.bat` / `start-windows.bat` on Windows; verify file dialogs, worker cancellation, and a native PyInstaller build.
-3. Record concrete problem pages before adjusting heuristics. Prefer page-specific or region-specific corrections over broad guesses.
-4. Add region-level table/equation overrides and an explicit visual-fidelity profile for math-heavy documents if needed.
-5. Add optional OCR after baseline layout behavior is stable; make its extra dependencies and memory costs explicit.
+## Appearance and size feedback
 
-Source is delivered under AGPL v3 or later, consistent with the selected PDF engine's open-source route. The application performs no network requests during conversion.
+Flo traced a roughly 300 MB versus 30 MB output difference to accidentally using full-page image mode instead of Hybrid; link overhead was not the cause. The screenshot then showed a completed Hybrid conversion of 35.20 MiB with Sharp colour images. Keep the existing engine defaults.
+
+Flo authorized System / Light / Dark appearance (System default), saved separately from conversion profiles, following live desktop colour-scheme changes. The interface uses explicit palettes/styles for readable dropdowns, labels, settings backgrounds and scrollbars. Document previews keep their original colours. Layout descriptions clarify full-page image size and non-reflowing text. Local theme checks bring the suite to 40 tests. Native CI and portable packaging must rerun for this update.
+
+## Engine and verification
+
+Python/PyMuPDF 1.26.x engine, PySide6 Essentials desktop and a separate QProcess worker with UTF-8 event files. Reflowable paragraphs/headings/simple ruled HTML tables, visual crops for difficult tables/notation/diagrams, whole-page fallbacks for scans/slides/rotated or failed reconstruction. Bounded 24-page sampling, one-page processing, capped output rasters, image reuse, disk staging and incremental ZIP writes. Cancellation and rollback retain the previous complete book.
+
+The original seven-page fixture remains the established baseline. A new three-page navigation fixture covers v0.2. See `docs/BENCHMARKS.md` for measurements/checks. Local GUI tests are Linux/Qt offscreen; native platform and frozen-worker results are recorded by CI. Flo still needs to try new navigation/regions and the portable app on the actual Kindle/computer.
+
+Reading order, reconstruction and crop expansion are heuristics. Raster caps do not impose a hard RAM quota on arbitrary PDF decoding. Link metadata grows with link count. Destinations map to blocks rather than exact PDF pixels; image targets point to the preserved image. One-page previews exclude cross-page targets. The desktop content preview is approximate.
+
+OCR, inferred links from plain reference text, popup-note semantics, semantic footnote reconstruction, table editing, robust layouts beyond two columns and source-font embedding remain future work. Borderless-table detection is experimental. Local file/executable PDF link actions are omitted while source text remains.
+
+## PlumePilot comparison
+
+Flo asked whether the extension can benefit from the quality/size improvements. PlumePilot main uses PDF.js/JSZip and renders entire complex pages as visual blocks. It already selects PNG/JPEG and bounds canvases. PdfToEpub converter's region crops, adjustable surrounding prose, HTML grids and asset reuse explain much of the gap. See read-only `docs/PLUMEPILOT_COMPARISON.md` for source references and a feasible JavaScript improvement path. The native Python engine cannot simply be copied into the extension. No PlumePilot code/branch change is part of this PR.
+
+## Next work
+
+1. Flo trials navigation-lab, manual regions and the portable app on the device/computer.
+2. Refine geometry/link placement using concrete problem pages.
+3. A separate PlumePilot PR can start with conservative region crops/asset reuse, keeping whole-page fallback and browser/course-export checks.
+4. Consider optional OCR and batch conversion after this baseline is stable.
+
+AGPL v3 or later. Conversion performs no network requests; setup/CI download dependencies.

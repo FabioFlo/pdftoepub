@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
+import math
 import re
 from pathlib import Path
 
@@ -17,6 +18,9 @@ class Options:
     remove_margins: bool = True
     detect_borderless: bool = False
     page_modes: dict[int, str] = field(default_factory=dict)
+    preserve_links: bool = True
+    # Fractions of the displayed source-page bounds: x0, y0, x1, y1.
+    page_regions: dict[int, list[list[float]]] = field(default_factory=dict)
 
     def validate(self) -> None:
         for value, choices in [
@@ -31,6 +35,16 @@ class Options:
         self.page_modes = {int(k): v for k, v in self.page_modes.items()}
         if any(k < 1 or v not in {"hybrid", "preserve"} for k, v in self.page_modes.items()):
             raise ValueError("Page overrides must use positive page numbers and hybrid/preserve.")
+        self.page_regions = {int(k): v for k, v in self.page_regions.items()}
+        for page, regions in self.page_regions.items():
+            if page < 1 or not isinstance(regions, list):
+                raise ValueError("Regions must map positive page numbers to lists of rectangles.")
+            for region in regions:
+                if (not isinstance(region, (list, tuple)) or len(region) != 4 or
+                    any(not isinstance(v, (int, float)) or isinstance(v, bool) or
+                        not math.isfinite(v) or not 0 <= v <= 1 for v in region) or
+                    region[0] >= region[2] or region[1] >= region[3]):
+                    raise ValueError("Each region must be [x0, y0, x1, y1] with increasing coordinates between 0 and 1.")
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -49,6 +63,11 @@ class PageResult:
     equation_images: int = 0
     removed_margin_lines: int = 0
     removed_margin_images: int = 0
+    manual_regions: int = 0
+    region_bounds: list[list[float]] = field(default_factory=list)
+    internal_links: int = 0
+    external_links: int = 0
+    skipped_links: int = 0
     warnings: list[str] = field(default_factory=list)
     xhtml: str = ""
 

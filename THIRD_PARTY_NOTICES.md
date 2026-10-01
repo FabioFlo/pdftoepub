@@ -1,6 +1,6 @@
 # Dependencies and licensing
 
-LeafPress source is provided under GNU AGPL v3 or later. The complete license is in `LICENSE`. Copyright (c) 2026 LeafPress contributors.
+PdfToEpub converter source is provided under GNU AGPL v3 or later. The complete license is in `LICENSE`. Copyright (c) 2026 PdfToEpub converter contributors.
 
 Dependencies are downloaded during setup; third-party binaries are not embedded in this source ZIP.
 

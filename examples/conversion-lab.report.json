@@ -1,13 +1,13 @@
 {
-  "application": "LeafPress",
-  "version": "0.1.0",
-  "created_utc": "2026-09-30T21:32:06.892911+00:00",
+  "application": "PdfToEpub converter",
+  "version": "0.2.0",
+  "created_utc": "2026-10-01T14:35:43.264377+00:00",
   "input": "conversion-lab.pdf",
-  "input_bytes": 56207,
+  "input_bytes": 56270,
   "output": "conversion-lab.epub",
-  "output_bytes": 200675,
-  "title": "LeafPress conversion lab",
-  "author": "LeafPress",
+  "output_bytes": 203850,
+  "title": "PdfToEpub converter conversion lab",
+  "author": "PdfToEpub converter",
   "source_pages": 7,
   "converted_pages": 7,
   "options": {
@@ -20,10 +20,12 @@
     "pages": "",
     "remove_margins": true,
     "detect_borderless": false,
-    "page_modes": {}
+    "page_modes": {},
+    "preserve_links": true,
+    "page_regions": {}
   },
-  "elapsed_seconds": 0.25,
-  "peak_process_mib": 63.95,
+  "elapsed_seconds": 0.389,
+  "peak_process_mib": 62.62,
   "memory_scope": "conversion process including Python/native PDF engine; GUI excluded",
   "platform": "linux",
   "pymupdf_version": "1.26.6",
@@ -36,13 +38,17 @@
     "full_epubcheck": false
   },
   "totals": {
-    "text_characters": 2455,
+    "text_characters": 2465,
     "html_tables": 1,
     "table_images": 1,
     "images": 3,
     "equation_images": 2,
     "removed_margin_lines": 10,
-    "removed_margin_images": 0
+    "removed_margin_images": 0,
+    "manual_regions": 0,
+    "internal_links": 0,
+    "external_links": 0,
+    "skipped_links": 0
   },
   "preserved_pages": 2,
   "review_pages": 5,
@@ -52,13 +58,18 @@
       "label": "1",
       "title": "A readable page",
       "mode": "hybrid",
-      "text_characters": 628,
+      "text_characters": 638,
       "html_tables": 0,
       "table_images": 0,
       "images": 0,
       "equation_images": 0,
       "removed_margin_lines": 2,
       "removed_margin_images": 0,
+      "manual_regions": 0,
+      "region_bounds": [],
+      "internal_links": 0,
+      "external_links": 0,
+      "skipped_links": 0,
       "warnings": []
     },
     {
@@ -73,6 +84,11 @@
       "equation_images": 0,
       "removed_margin_lines": 2,
       "removed_margin_images": 0,
+      "manual_regions": 0,
+      "region_bounds": [],
+      "internal_links": 0,
+      "external_links": 0,
+      "skipped_links": 0,
       "warnings": []
     },
     {
@@ -87,6 +103,11 @@
       "equation_images": 0,
       "removed_margin_lines": 2,
       "removed_margin_images": 0,
+      "manual_regions": 0,
+      "region_bounds": [],
+      "internal_links": 0,
+      "external_links": 0,
+      "skipped_links": 0,
       "warnings": [
         "A wide, merged, or uncertain table was preserved as an image."
       ]
@@ -103,6 +124,11 @@
       "equation_images": 2,
       "removed_margin_lines": 2,
       "removed_margin_images": 0,
+      "manual_regions": 0,
+      "region_bounds": [],
+      "internal_links": 0,
+      "external_links": 0,
+      "skipped_links": 0,
       "warnings": [
         "Mathematical notation preserved with image crops; check their placement."
       ]
@@ -119,6 +145,11 @@
       "equation_images": 0,
       "removed_margin_lines": 2,
       "removed_margin_images": 0,
+      "manual_regions": 0,
+      "region_bounds": [],
+      "internal_links": 0,
+      "external_links": 0,
+      "skipped_links": 0,
       "warnings": [
         "Two-column reading order inferred; compare it with the original."
       ]
@@ -135,8 +166,13 @@
       "equation_images": 0,
       "removed_margin_lines": 0,
       "removed_margin_images": 0,
+      "manual_regions": 0,
+      "region_bounds": [],
+      "internal_links": 0,
+      "external_links": 0,
+      "skipped_links": 0,
       "warnings": [
-        "Large raster page with little body text; preserved visually. OCR is not included in v0.1."
+        "Large raster page with little body text; preserved visually. OCR is not included."
       ]
     },
     {
@@ -151,6 +187,11 @@
       "equation_images": 0,
       "removed_margin_lines": 0,
       "removed_margin_images": 0,
+      "manual_regions": 0,
+      "region_bounds": [],
+      "internal_links": 0,
+      "external_links": 0,
+      "skipped_links": 0,
       "warnings": [
         "Landscape/slide layout preserved visually."
       ]

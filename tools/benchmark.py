@@ -14,6 +14,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("pdfs", nargs="*", type=Path)
     parser.add_argument("--stress-repeat", type=int, default=0)
+    parser.add_argument("--unique-image-pages", type=int, nargs="*", default=[],
+                        help="Generate distinct 2100x2970 noisy scan images, e.g. 12 60")
     parser.add_argument("--output-dir", type=Path, default=Path("benchmarks"))
     args = parser.parse_args()
     if args.stress_repeat < 0:
@@ -28,10 +30,20 @@ def main():
                 document.insert_pdf(fixture)
             document.save(path, garbage=3, deflate=True)
         pdfs.append(path)
+    for count in args.unique_image_pages:
+        if not 1 <= count <= 1000:
+            parser.error("Unique-image page counts must be between 1 and 1000")
+        path = args.output_dir / f"unique-images-{count}.pdf"
+        # Linux can retain a fork child's pre-exec high-water mark. Generating
+        # many source images in THIS launcher therefore inflates every later
+        # ru_maxrss measurement. Keep the generator in its own process too.
+        subprocess.run([sys.executable, str(project / "tools/make_image_stress.py"),
+                        str(path.resolve()), str(count)], check=True)
+        pdfs.append(path)
     summaries = []
     for position, pdf in enumerate(pdfs, 1):
         output = args.output_dir / f"{position:02d}-{pdf.stem}.epub"
-        run = subprocess.run([sys.executable, "-m", "leafpress", "convert", str(pdf.resolve()),
+        run = subprocess.run([sys.executable, "-m", "pdftoepub", "convert", str(pdf.resolve()),
                               str(output.resolve()), "--overwrite"], cwd=project,
                              capture_output=True, text=True, encoding="utf-8", errors="replace")
         if run.returncode:

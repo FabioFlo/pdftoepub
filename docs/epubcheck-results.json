@@ -1,37 +1,74 @@
 [
   {
     "file": "conversion-lab.epub",
-    "epubcheck_version": "5.3.0",
-    "exit_code": 0,
-    "stdout": "Validating using EPUB version 3.3 rules.\nNo errors or warnings detected.\nMessages: 0 fatals / 0 errors / 0 warnings / 0 infos\n\nEPUBCheck completed",
-    "stderr": ""
+    "returncode": 0,
+    "fatal": 0,
+    "errors": 0,
+    "warnings": 0,
+    "epubcheck": "5.3.0"
+  },
+  {
+    "file": "navigation-lab.epub",
+    "returncode": 0,
+    "fatal": 0,
+    "errors": 0,
+    "warnings": 0,
+    "epubcheck": "5.3.0"
   },
   {
     "file": "01-conversion-lab.epub",
-    "epubcheck_version": "5.3.0",
-    "exit_code": 0,
-    "stdout": "Validating using EPUB version 3.3 rules.\nNo errors or warnings detected.\nMessages: 0 fatals / 0 errors / 0 warnings / 0 infos\n\nEPUBCheck completed",
-    "stderr": ""
+    "returncode": 0,
+    "fatal": 0,
+    "errors": 0,
+    "warnings": 0,
+    "epubcheck": "5.3.0"
   },
   {
-    "file": "02-RelIns_Pegaso.epub",
-    "epubcheck_version": "5.3.0",
-    "exit_code": 0,
-    "stdout": "Validating using EPUB version 3.3 rules.\nNo errors or warnings detected.\nMessages: 0 fatals / 0 errors / 0 warnings / 0 infos\n\nEPUBCheck completed",
-    "stderr": ""
+    "file": "02-navigation-lab.epub",
+    "returncode": 0,
+    "fatal": 0,
+    "errors": 0,
+    "warnings": 0,
+    "epubcheck": "5.3.0"
   },
   {
-    "file": "03-IntProSof_Pegaso.epub",
-    "epubcheck_version": "5.3.0",
-    "exit_code": 0,
-    "stdout": "Validating using EPUB version 3.3 rules.\nNo errors or warnings detected.\nMessages: 0 fatals / 0 errors / 0 warnings / 0 infos\n\nEPUBCheck completed",
-    "stderr": ""
+    "file": "03-RelIns_Pegaso.epub",
+    "returncode": 0,
+    "fatal": 0,
+    "errors": 0,
+    "warnings": 0,
+    "epubcheck": "5.3.0"
   },
   {
-    "file": "04-stress-350.epub",
-    "epubcheck_version": "5.3.0",
-    "exit_code": 0,
-    "stdout": "Validating using EPUB version 3.3 rules.\nNo errors or warnings detected.\nMessages: 0 fatals / 0 errors / 0 warnings / 0 infos\n\nEPUBCheck completed",
-    "stderr": ""
+    "file": "04-IntProSof_Pegaso.epub",
+    "returncode": 0,
+    "fatal": 0,
+    "errors": 0,
+    "warnings": 0,
+    "epubcheck": "5.3.0"
+  },
+  {
+    "file": "05-stress-350.epub",
+    "returncode": 0,
+    "fatal": 0,
+    "errors": 0,
+    "warnings": 0,
+    "epubcheck": "5.3.0"
+  },
+  {
+    "file": "06-unique-images-12.epub",
+    "returncode": 0,
+    "fatal": 0,
+    "errors": 0,
+    "warnings": 0,
+    "epubcheck": "5.3.0"
+  },
+  {
+    "file": "07-unique-images-60.epub",
+    "returncode": 0,
+    "fatal": 0,
+    "errors": 0,
+    "warnings": 0,
+    "epubcheck": "5.3.0"
   }
 ]

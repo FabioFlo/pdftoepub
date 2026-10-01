@@ -1,0 +1,53 @@
+name: Verify and build PdfToEpub converter
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      QT_QPA_PLATFORM: offscreen
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - run: python -m pip install -e ".[gui,demo]"
+      - run: python -m unittest discover -s tests -v
+
+  windows-portable:
+    needs: tests
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - run: python -m pip install -e ".[gui,build]"
+      - run: python -m PyInstaller --noconfirm --clean --onedir --windowed --name PdfToEpubConverter --collect-all pymupdf --hidden-import pdftoepub.gui launcher.py
+      - run: python tools/check_frozen.py dist/PdfToEpubConverter/PdfToEpubConverter.exe examples/conversion-lab.pdf
+      - name: Include source and notices
+        shell: pwsh
+        run: |
+          Copy-Item LICENSE,THIRD_PARTY_NOTICES.md,START_HERE_IT.md -Destination dist/PdfToEpubConverter
+          Copy-Item examples -Destination dist/PdfToEpubConverter/examples -Recurse
+      - run: python tools/package_source.py dist/PdfToEpubConverter/PdfToEpubConverter-source.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PdfToEpubConverter-0.2.0-Windows-portable
+          path: dist/PdfToEpubConverter
+          if-no-files-found: error
+          retention-days: 30
