@@ -20,11 +20,25 @@ test_validator_rejects_broken_image_reference (test_conversion.ConversionTests.t
 test_word_style_leading_and_first_line_indent_reflow (test_conversion.ConversionTests.test_word_style_leading_and_first_line_indent_reflow) ... ok
 test_wrapped_lines_are_one_paragraph (test_conversion.ConversionTests.test_wrapped_lines_are_one_paragraph) ... ok
 test_cancel_worker_and_clean_staging (test_gui.GuiTests.test_cancel_worker_and_clean_staging) ... ok
+test_drag_region_preserves_table_in_real_worker (test_gui.GuiTests.test_drag_region_preserves_table_in_real_worker) ... ok
 test_export_and_reopen_pages (test_gui.GuiTests.test_export_and_reopen_pages) ... ok
 test_preview_table_and_page_override_in_real_worker (test_gui.GuiTests.test_preview_table_and_page_override_in_real_worker) ... ok
+test_saved_preferences_and_profiles_exclude_document_edits (test_gui.GuiTests.test_saved_preferences_and_profiles_exclude_document_edits) ... ok
+test_fork_parent_high_water_does_not_inflate_exec_worker (test_memory.MemoryTests.test_fork_parent_high_water_does_not_inflate_exec_worker) ... ok
+test_bookmark_hierarchy_is_retained (test_navigation_regions.NavigationRegionTests.test_bookmark_hierarchy_is_retained) ... ok
+test_disable_link_preservation (test_navigation_regions.NavigationRegionTests.test_disable_link_preservation) ... ok
+test_external_anchors_allowed_but_remote_assets_rejected (test_navigation_regions.NavigationRegionTests.test_external_anchors_allowed_but_remote_assets_rejected) ... ok
+test_invalid_regions_are_rejected_before_publication (test_navigation_regions.NavigationRegionTests.test_invalid_regions_are_rejected_before_publication) ... ok
+test_manual_region_keeps_partial_text_lines_whole (test_navigation_regions.NavigationRegionTests.test_manual_region_keeps_partial_text_lines_whole) ... ok
+test_manual_table_crop_preserves_grid_without_duplicate_content (test_navigation_regions.NavigationRegionTests.test_manual_table_crop_preserves_grid_without_duplicate_content) ... ok
+test_overlapping_regions_merge (test_navigation_regions.NavigationRegionTests.test_overlapping_regions_merge) ... ok
+test_page_selection_reports_omitted_destinations (test_navigation_regions.NavigationRegionTests.test_page_selection_reports_omitted_destinations) ... ok
+test_partial_text_links_and_precise_block_destination (test_navigation_regions.NavigationRegionTests.test_partial_text_links_and_precise_block_destination) ... ok
+test_preserved_page_links_remain_available (test_navigation_regions.NavigationRegionTests.test_preserved_page_links_remain_available) ... ok
+test_profiles_do_not_include_document_specific_edits (test_navigation_regions.NavigationRegionTests.test_profiles_do_not_include_document_specific_edits) ... ok
 
 ----------------------------------------------------------------------
-Ran 24 tests in 2.252s
+Ran 38 tests in 4.915s
 
 OK
 Consider using the pymupdf_layout package for a greatly improved page layout analysis.

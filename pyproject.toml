@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "leafpress"
-version = "0.1.0"
+version = "0.2.0"
 description = "Offline PDF to EPUB converter with reflowable text and visual fallbacks"
 requires-python = ">=3.10"
 dependencies = ["PyMuPDF>=1.26.6,<1.27"]

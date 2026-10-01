@@ -11,6 +11,7 @@ import pymupdf
 
 from .epub import EpubWriter, esc, xhtml_document
 from .model import Options, PageResult
+from .links import PageLinks
 
 
 TEXT_FLAGS = pymupdf.TEXTFLAGS_DICT & ~pymupdf.TEXT_PRESERVE_IMAGES
@@ -35,8 +36,14 @@ class Line:
         return median(sizes) if sizes else 11.0
 
 
-def lines_on(page: pymupdf.Page) -> list[Line]:
-    data = page.get_text("dict", flags=TEXT_FLAGS, sort=False)
+def lines_on(page: pymupdf.Page, with_characters: bool = False) -> list[Line]:
+    data = page.get_text("rawdict" if with_characters else "dict", flags=TEXT_FLAGS, sort=False)
+    if with_characters:
+        for block in data["blocks"]:
+            if block["type"] == 0:
+                for line in block["lines"]:
+                    for span in line["spans"]:
+                        span["text"] = "".join(char["c"] for char in span["chars"])
     return [Line(pymupdf.Rect(line["bbox"]), line["spans"], block_index,
                  tuple(line.get("dir", (1, 0))))
             for block_index, block in enumerate(data["blocks"]) if block["type"] == 0
@@ -142,12 +149,14 @@ def merge_regions(regions: list[pymupdf.Rect], bounds: pymupdf.Rect) -> list[pym
 
 class PageExtractor:
     def __init__(self, writer: EpubWriter, options: Options, repeated: set[str], body_size: float,
-                 repeated_images: set[str] | None = None):
+                 repeated_images: set[str] | None = None, link_map=None):
         self.writer = writer
         self.options = options
         self.repeated = repeated
         self.body_size = body_size
         self.repeated_images = repeated_images or set()
+        self.link_map = link_map
+        self.links = PageLinks()
 
     def _keep_line(self, line: Line, page: pymupdf.Page) -> bool:
         if not self.options.remove_margins or not is_margin(line.rect, page.rect.height):
@@ -165,7 +174,11 @@ class PageExtractor:
         result.images = 1
         result.text_characters = result.html_tables = result.table_images = result.equation_images = 0
         result.removed_margin_lines = result.removed_margin_images = 0
-        result.xhtml = self._document(result, figure)
+        result.manual_regions = 0
+        result.region_bounds = []
+        self.links.reset()
+        items = self.links.decorate([(page.rect, figure)], result)
+        result.xhtml = self._document(result, "\n".join(content for _, content in items))
         return result
 
     def _document(self, result: PageResult, body: str) -> str:
@@ -176,6 +189,7 @@ class PageExtractor:
     def extract(self, page: pymupdf.Page, number: int) -> PageResult:
         label = page.get_label() or str(number)
         result = PageResult(number, label, f"Page {label}")
+        self.links = self.link_map.for_page(number) if self.link_map else PageLinks()
         mode = self.options.page_modes.get(number, self.options.mode)
         if mode == "preserve":
             return self._preserve(page, result)
@@ -183,7 +197,13 @@ class PageExtractor:
             return self._preserve(page, result, "Rotated page preserved visually; review its reading orientation.")
         if page.rect.width / max(1, page.rect.height) > 1.25:
             return self._preserve(page, result, "Landscape/slide layout preserved visually.")
-        all_lines = lines_on(page)
+        all_lines = lines_on(page, with_characters=bool(self.links.links))
+        manual = [pymupdf.Rect(page.rect.x0 + r[0] * page.rect.width,
+                               page.rect.y0 + r[1] * page.rect.height,
+                               page.rect.x0 + r[2] * page.rect.width,
+                               page.rect.y0 + r[3] * page.rect.height)
+                  for r in self.options.page_regions.get(number, [])]
+        manual = self._expand_manual(manual, [line.rect for line in all_lines], page.rect)
         lines = [line for line in all_lines if self._keep_line(line, page)]
         result.removed_margin_lines = len(all_lines) - len(lines)
         image_info = page.get_image_info(hashes=False, xrefs=False)
@@ -191,11 +211,11 @@ class PageExtractor:
         result.removed_margin_images = len(omitted_images)
         source_chars = sum(len(line.text) for line in all_lines)
         if source_chars < 25:
-            return self._preserve(page, result, "Little or no extractable text. Preserved as an image; OCR is not included in v0.1.")
+            return self._preserve(page, result, "Little or no extractable text. Preserved as an image; OCR is not included.")
         if sum(len(line.text) for line in lines) < 100 and any(
             overlap_fraction(page.rect, pymupdf.Rect(info["bbox"])) > 0.4 for info in image_info
         ):
-            return self._preserve(page, result, "Large raster page with little body text; preserved visually. OCR is not included in v0.1.")
+            return self._preserve(page, result, "Large raster page with little body text; preserved visually. OCR is not included.")
         if any(overlap_fraction(page.rect, pymupdf.Rect(info["bbox"])) > 0.85 for info in image_info):
             return self._preserve(page, result, "Full-page image or scan detected; preserved visually to avoid duplicated OCR text.")
         if any(abs(line.direction[0] - 1) > 0.02 or abs(line.direction[1]) > 0.02 for line in lines):
@@ -204,7 +224,7 @@ class PageExtractor:
         if len(drawings) > 3500:
             return self._preserve(page, result, "Very dense vector artwork preserved visually to limit extraction work.")
         try:
-            table_regions, table_items = self._tables(page, drawings, result)
+            table_regions, table_items = self._tables(page, drawings, result, manual)
         except Exception as exc:
             return self._preserve(page, result,
                                   f"Table detection could not complete ({type(exc).__name__}); page preserved visually.")
@@ -268,13 +288,28 @@ class PageExtractor:
             if any(rect.intersects(table_rect) for rect in regions):
                 table_items = [(r, content) for r, content in table_items if tuple(r) != tuple(table_rect)]
                 # The original counts are recomputed below from rendered entries.
+        manual = self._expand_manual(manual, table_regions + equation_regions + regions +
+                                     [line.rect for line in all_lines], page.rect)
+        table_items = [(r, content) for r, content in table_items if not any(r.intersects(m) for m in manual)]
+        regions = [r for r in regions if not any(r.intersects(m) for m in manual)]
+        equation_regions = [r for r in equation_regions if not any(r.intersects(m) for m in manual)]
         items: list[tuple[pymupdf.Rect, str]] = list(table_items)
+        for rect in manual:
+            items.append((rect, self.writer.figure(page, rect, f"Manually preserved region on PDF page {label}", "manual-region")))
+            result.images += 1
+        result.manual_regions = len(manual)
+        result.region_bounds = [[(r.x0 - page.rect.x0) / page.rect.width,
+                                 (r.y0 - page.rect.y0) / page.rect.height,
+                                 (r.x1 - page.rect.x0) / page.rect.width,
+                                 (r.y1 - page.rect.y0) / page.rect.height] for r in manual]
+        if manual:
+            result.warnings.append("Manual regions preserved visually; bounds expanded to include intersecting content. Compare the crop with the original.")
         for rect in regions:
             text = page.get_textbox(rect).strip()
             alt = text[:220] if text else f"Figure from PDF page {label}"
             items.append((rect, self.writer.figure(page, rect, alt)))
             result.images += 1
-        exclusions = table_regions + regions + equation_regions
+        exclusions = table_regions + regions + equation_regions + manual
         remaining = [line for line in lines if not any(
             overlap_fraction(line.rect, region) > 0.3 for region in exclusions)]
         for rect in equation_regions:
@@ -283,6 +318,7 @@ class PageExtractor:
         items.extend(self._paragraphs(page, remaining, result))
         if not items:
             return self._preserve(page, result, "No reliable reading content was reconstructed; page preserved visually.")
+        items = self.links.decorate(items, result)
         ordered, columns = reading_order(items, page.rect.width)
         if columns:
             result.warnings.append("Two-column reading order inferred; compare it with the original.")
@@ -294,7 +330,24 @@ class PageExtractor:
         result.xhtml = self._document(result, body)
         return result
 
-    def _tables(self, page, drawings, result):
+    def _expand_manual(self, manual, objects, bounds):
+        if not manual:
+            return []
+        # Monotone unions terminate when no boundary moves. Any partially
+        # intersected line/table/figure must be included whole before exclusion.
+        manual = merge_regions(manual, bounds)
+        while True:
+            previous = [tuple(r) for r in manual]
+            for index, rect in enumerate(manual):
+                for other in objects:
+                    if rect.intersects(other):
+                        rect |= other
+                manual[index] = rect
+            manual = merge_regions(manual, bounds)
+            if previous == [tuple(r) for r in manual]:
+                return manual
+
+    def _tables(self, page, drawings, result, manual=()):
         tables = page.find_tables(strategy="lines_strict", paths=drawings).tables
         borderless = False
         if not tables and self.options.detect_borderless:
@@ -312,6 +365,9 @@ class PageExtractor:
             external = bool(table.header.external)
             if external:
                 rect |= pymupdf.Rect(table.header.bbox)
+            if any(rect.intersects(region) for region in manual):
+                regions.append(rect)
+                continue
             cell_data = page.get_text("dict", flags=TEXT_FLAGS, clip=rect)
             mathematical_cells = any(MATH_FONT.search(span["font"]) or span["flags"] & 1
                                      for block in cell_data["blocks"] if block["type"] == 0
@@ -410,13 +466,16 @@ class PageExtractor:
                 if alt.endswith(" "):
                     output.append(" ")
                 continue
-            text = esc(span["text"])
-            if span["flags"] & 1:
-                text = f"<sup>{text}</sup>"
-            if span["flags"] & 2:
-                text = f"<em>{text}</em>"
-            if span["flags"] & 16:
-                text = f"<strong>{text}</strong>"
+            def format_text(value):
+                text = esc(value)
+                if span["flags"] & 1:
+                    text = f"<sup>{text}</sup>"
+                if span["flags"] & 2:
+                    text = f"<em>{text}</em>"
+                if span["flags"] & 16:
+                    text = f"<strong>{text}</strong>"
+                return text
+            text = self.links.inline(span, format_text)
             output.append(text)
             result.text_characters += len(span["text"])
             index += 1

@@ -16,6 +16,7 @@ from . import __version__
 from .epub import EpubWriter, validate_epub
 from .extract import PageExtractor, sample_document
 from .model import Options, PageResult, select_pages, validate_paths
+from .links import LinkMap
 
 
 class ConversionCancelled(Exception):
@@ -23,8 +24,18 @@ class ConversionCancelled(Exception):
 
 
 def peak_memory_mib() -> float | None:
-    """Process peak working set on Windows; ru_maxrss on macOS/Linux."""
+    """Peak resident memory: Win32, Linux VmHWM, macOS resource counters."""
     try:
+        if sys.platform.startswith("linux"):
+            try:
+                with open("/proc/self/status", encoding="ascii") as status:
+                    for line in status:
+                        if line.startswith("VmHWM:"):
+                            return round(int(line.split()[1]) / 1024, 2)
+            except OSError:
+                pass
+            # Unlike ru_maxrss, VmHWM resets after exec. This avoids attributing
+            # a Qt parent's pre-exec RSS to its much smaller conversion worker.
         if sys.platform == "win32":
             import ctypes
             from ctypes import wintypes
@@ -88,7 +99,7 @@ def convert(source: str | Path, output: str | Path, options: Options | None = No
         if not document.page_count:
             raise ValueError("This PDF has no pages.")
         selected = select_pages(options.pages, document.page_count)
-        if any(page > document.page_count for page in options.page_modes):
+        if any(page > document.page_count for page in options.page_modes.keys() | options.page_regions.keys()):
             raise ValueError("A page override is outside this PDF.")
         metadata = document.metadata or {}
         title = options.title.strip() or metadata.get("title", "").strip() or source.stem
@@ -98,13 +109,17 @@ def convert(source: str | Path, output: str | Path, options: Options | None = No
         # Previewing one page must use the same style/margin preflight as a full
         # conversion. Sampling is bounded even when only a few pages are selected.
         repeated, body_size, repeated_images = sample_document(document, list(range(document.page_count)), cancelled)
+        link_map = None
+        if options.preserve_links:
+            notify({"type": "status", "message": "Mapping PDF links to EPUB destinations..."})
+            link_map = LinkMap(document, selected, cancelled)
         page_summaries = []
         with tempfile.TemporaryDirectory(prefix=".leafpress-", dir=staging_parent or output.parent) as temporary:
             temporary = Path(temporary)
             epub_temp = temporary / "book.epub"
             root = temporary / "preview"
             writer = EpubWriter(epub_temp, root, options.quality)
-            extractor = PageExtractor(writer, options, repeated, body_size, repeated_images)
+            extractor = PageExtractor(writer, options, repeated, body_size, repeated_images, link_map)
             try:
                 for position, index in enumerate(selected, 1):
                     cancelled()
@@ -147,7 +162,8 @@ def convert(source: str | Path, output: str | Path, options: Options | None = No
                 "unique_images": asset_count, "validation": validation,
                 "totals": {key: sum(page[key] for page in page_summaries) for key in
                            ("text_characters", "html_tables", "table_images", "images",
-                            "equation_images", "removed_margin_lines", "removed_margin_images")},
+                            "equation_images", "removed_margin_lines", "removed_margin_images",
+                            "manual_regions", "internal_links", "external_links", "skipped_links")},
                 "preserved_pages": sum(page["mode"] == "preserve" for page in page_summaries),
                 "review_pages": sum(bool(page["warnings"]) for page in page_summaries),
                 "pages": page_summaries,

@@ -15,7 +15,9 @@ import pymupdf
 CSS = """body { margin: 4%; line-height: 1.5; font-family: serif; }
 h1, h2, h3 { line-height: 1.25; margin-top: 1.2em; }
 p { margin: 0.65em 0; }
-.illustration, .equation, .table-image { margin: 1em 0; text-align: center; }
+.illustration, .equation, .table-image, .manual-region { margin: 1em 0; text-align: center; }
+a { color: inherit; text-decoration: underline; }
+.source-link { font-size: 0.9em; margin: 0.4em 0; }
 img { max-width: 100%; height: auto; }
 table { border-collapse: collapse; width: 100%; margin: 1em 0; }
 th, td { border: 1px solid #777; padding: 0.35em; vertical-align: top; }
@@ -131,12 +133,24 @@ class EpubWriter:
         seen = set()
         for level, caption, page in toc:
             if page in by_page and (page, caption) not in seen:
-                navigation.append((by_page[page]["href"], caption))
+                navigation.append((max(1, int(level)), by_page[page]["href"], caption))
                 seen.add((page, caption))
         if not navigation:
-            navigation = [(entry["href"], entry["title"]) for entry in self.entries]
-        items = "".join(f'<li><a href="{esc(href)}">{esc(caption)}</a></li>'
-                        for href, caption in navigation)
+            navigation = [(1, entry["href"], entry["title"]) for entry in self.entries]
+        # Normalize skipped outline levels without inventing empty chapters.
+        tree, stack = [], []
+        for position, (level, href, caption) in enumerate(navigation, 1):
+            node = {"href": href, "caption": caption, "children": [], "position": position}
+            while stack and stack[-1][0] >= level:
+                stack.pop()
+            (stack[-1][1]["children"] if stack else tree).append(node)
+            stack.append((level, node))
+
+        def nav_items(nodes):
+            return "".join(f'<li><a href="{esc(n["href"])}">{esc(n["caption"])}</a>' +
+                           (f'<ol>{nav_items(n["children"])}</ol>' if n["children"] else "") + "</li>"
+                           for n in nodes)
+        items = nav_items(tree)
         page_items = "".join(
             f'<li><a href="{entry["href"]}#source-{entry["page"]}">{esc(entry["label"])}</a></li>'
             for entry in self.entries)
@@ -146,10 +160,12 @@ class EpubWriter:
         nav_doc = xhtml_document(title, nav, language).replace("../styles/book.css", "styles/book.css")
         self._write("OEBPS/nav.xhtml", nav_doc)
         identifier = f"urn:uuid:{uuid.uuid4()}"
-        ncx_items = "".join(
-            f'<navPoint id="nav-{i}" playOrder="{i}"><navLabel><text>{esc(caption)}</text>'
-            f'</navLabel><content src="{esc(href)}"/></navPoint>'
-            for i, (href, caption) in enumerate(navigation, 1))
+        def ncx_points(nodes):
+            return "".join(f'<navPoint id="nav-{n["position"]}" playOrder="{n["position"]}">'
+                           f'<navLabel><text>{esc(n["caption"])}</text></navLabel>'
+                           f'<content src="{esc(n["href"])}"/>{ncx_points(n["children"])}</navPoint>'
+                           for n in nodes)
+        ncx_items = ncx_points(tree)
         self._write("OEBPS/toc.ncx", '<?xml version="1.0" encoding="utf-8"?>'
                     '<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">'
                     f'<head><meta name="dtb:uid" content="{identifier}"/></head>'
@@ -222,6 +238,11 @@ def validate_epub(path: Path) -> dict:
                         continue
                     parts = urlsplit(reference)
                     if parts.scheme or parts.netloc:
+                        # Outbound hyperlinks are valid; remote image/style
+                        # resources remain disallowed by our offline package.
+                        from .links import allowed_uri
+                        if element.tag == "{http://www.w3.org/1999/xhtml}a" and attribute == "href" and allowed_uri(reference):
+                            continue
                         raise ValueError("Unexpected external EPUB resource.")
                     target = posixpath.normpath(posixpath.join(posixpath.dirname(name), unquote(parts.path))) if parts.path else name
                     if target not in names:

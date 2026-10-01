@@ -8,14 +8,16 @@ import tempfile
 import xml.etree.ElementTree as ET
 
 import pymupdf
-from PySide6.QtCore import QProcess, QTimer, QUrl, Qt
+from PySide6.QtCore import QProcess, QSettings, QTimer, QUrl, Qt
 from PySide6.QtGui import QDesktopServices, QPixmap, QFont, QImageReader
 from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QFileDialog, QFormLayout,
                                QFrame, QHBoxLayout, QLabel, QLineEdit, QMainWindow, QMessageBox,
-                               QProgressBar, QPushButton, QScrollArea, QSplitter, QTextBrowser,
+                               QInputDialog, QProgressBar, QPushButton, QScrollArea, QSizePolicy, QSplitter, QTextBrowser,
                                QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget)
 
 from .model import Options, select_pages
+from .page_canvas import PageCanvas
+from .profiles import PROFILES, checked_preferences, preferences
 
 
 STYLE = """
@@ -63,7 +65,7 @@ def panel():
 
 
 class Window(QMainWindow):
-    def __init__(self):
+    def __init__(self, settings=None):
         super().__init__()
         self.setWindowTitle("LeafPress - PDF to EPUB")
         self.resize(1280, 850)
@@ -74,6 +76,12 @@ class Window(QMainWindow):
         self.preview_root = None
         self.current_page = 1
         self.page_modes = {}
+        self.page_regions = {}
+        self.resolved_regions = {}
+        self.settings = settings if settings is not None else QSettings("LeafPress", "LeafPress")
+        self.saved_profiles = {}
+        self.open_folder = str(self.settings.value("open_folder", ""))
+        self.save_folder = str(self.settings.value("save_folder", ""))
         self.process = None
         self.job_dir = None
         self.buffer = b""
@@ -87,6 +95,7 @@ class Window(QMainWindow):
         self.event_poll.setInterval(100)
         self.event_poll.timeout.connect(self._read_output)
         self._build()
+        self._restore_settings()
 
     def _build(self):
         root = QWidget()
@@ -123,11 +132,22 @@ class Window(QMainWindow):
         settings.setMaximumWidth(320)
         settings.setMinimumWidth(260)
         settings_layout.addWidget(label("Conversion settings", "eyebrow"))
+        preference_content = QWidget()
+        preference_layout = QVBoxLayout(preference_content)
+        preference_layout.setContentsMargins(0, 0, 0, 0)
+        preference_layout.setSpacing(10)
         form = QFormLayout()
         form.setVerticalSpacing(9)
+        self.profile = QComboBox()
+        self.profile.addItem("Balanced", "balanced")
+        self.profile.addItem("Technical", "technical")
+        self.profile.addItem("Compact", "compact")
+        self.profile.addItem("Custom settings", None)
+        self.profile.currentIndexChanged.connect(self.apply_profile)
+        form.addRow("Profile", self.profile)
         self.mode = QComboBox()
-        self.mode.addItem("Hybrid - adjustable text", "hybrid")
-        self.mode.addItem("Preserve all pages as images", "preserve")
+        self.mode.addItem("Hybrid / reflow", "hybrid")
+        self.mode.addItem("All page images", "preserve")
         self.mode.setToolTip("Hybrid reconstructs paragraphs and simple tables. Preserve keeps page appearance, with image-based text.")
         self.quality = QComboBox()
         self.quality.addItem("Balanced / colour", "balanced")
@@ -135,8 +155,9 @@ class Window(QMainWindow):
         self.quality.addItem("Sharp / colour", "sharp")
         self.quality.setToolTip("Controls cropped image resolution and file size. Adjustable text stays text at every quality.")
         self.tables = QComboBox()
-        self.tables.addItem("Auto - HTML when reliable", "auto")
-        self.tables.addItem("Preserve detected tables as images", "image")
+        self.tables.addItem("Auto / HTML", "auto")
+        self.tables.addItem("As images", "image")
+        self.tables.setToolTip("Auto reconstructs reliable simple grids as HTML. As images preserves the appearance of detected tables.")
         self.language = QComboBox()
         self.language.addItem("Italian", "it")
         self.language.addItem("English", "en")
@@ -148,23 +169,40 @@ class Window(QMainWindow):
         for text, widget in [("Layout", self.mode), ("Images", self.quality), ("Tables", self.tables),
                              ("Language", self.language), ("Pages", self.pages)]:
             form.addRow(text, widget)
-        settings_layout.addLayout(form)
-        self.remove_margins = QCheckBox("Remove repeated headers / footers")
+        for widget in (self.profile, self.mode, self.quality, self.tables, self.language, self.pages):
+            widget.setMinimumHeight(32)
+            widget.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
+        preference_layout.addLayout(form)
+        self.save_profile_button = QPushButton("Save profile...")
+        self.save_profile_button.clicked.connect(self.save_profile)
+        preference_layout.addWidget(self.save_profile_button)
+        self.remove_margins = QCheckBox("Remove repeated margins")
         self.remove_margins.setChecked(True)
         self.remove_margins.setToolTip("Repeated margin text and page counters are omitted from hybrid pages. Disable to retain them.")
         self.borderless = QCheckBox("Borderless tables (experimental)")
         self.borderless.setToolTip("May mistake aligned prose for a table. Review detected pages.")
-        settings_layout.addWidget(self.remove_margins)
-        settings_layout.addWidget(self.borderless)
-        settings_layout.addWidget(label("Scans and complex layouts use image fallbacks. Image text keeps its appearance and cannot resize independently.", "muted"))
+        preference_layout.addWidget(self.remove_margins)
+        preference_layout.addWidget(self.borderless)
+        self.preserve_links = QCheckBox("Preserve PDF and web links")
+        self.preserve_links.setChecked(True)
+        self.preserve_links.setToolTip("Internal links jump to the nearest reconstructed block. Image content gets an adjacent link list. Targets outside the chosen pages are reported.")
+        preference_layout.addWidget(self.preserve_links)
+        preference_layout.addWidget(label("Scans and complex layouts use image fallbacks. Image text keeps its appearance and cannot resize independently.", "muted"))
+        preference_scroll = QScrollArea()
+        preference_scroll.setWidgetResizable(True)
+        preference_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        preference_scroll.setWidget(preference_content)
+        preference_scroll.setMinimumHeight(155)
+        settings_layout.addWidget(preference_scroll, 3)
         settings_layout.addWidget(label("Source pages", "eyebrow"))
         self.page_list = QTreeWidget()
         self.page_list.setColumnCount(2)
         self.page_list.setHeaderLabels(["Page", "Result / review"])
         self.page_list.setColumnWidth(0, 50)
         self.page_list.setAlternatingRowColors(True)
+        self.page_list.setMinimumHeight(100)
         self.page_list.currentItemChanged.connect(self.select_page)
-        settings_layout.addWidget(self.page_list, 1)
+        settings_layout.addWidget(self.page_list, 2)
         horizontal.addWidget(settings)
 
         comparison, compare_layout = panel()
@@ -182,14 +220,28 @@ class Window(QMainWindow):
         self.preview_button.clicked.connect(self.preview_page)
         row.addWidget(self.preview_button)
         compare_layout.addLayout(row)
+        region_row = QHBoxLayout()
+        self.region_button = QPushButton("Select area to preserve")
+        self.region_button.setCheckable(True)
+        self.region_button.setEnabled(False)
+        self.region_button.toggled.connect(self.toggle_region_selection)
+        region_row.addWidget(self.region_button)
+        self.undo_region_button = QPushButton("Undo area")
+        self.undo_region_button.clicked.connect(self.undo_region)
+        region_row.addWidget(self.undo_region_button)
+        self.clear_regions_button = QPushButton("Clear page areas")
+        self.clear_regions_button.clicked.connect(self.clear_regions)
+        region_row.addWidget(self.clear_regions_button)
+        self.regions_label = label("0 selected areas", "muted")
+        region_row.addWidget(self.regions_label, 1)
+        compare_layout.addLayout(region_row)
         columns = QSplitter(Qt.Orientation.Horizontal)
         original = QWidget()
         original_layout = QVBoxLayout(original)
         original_layout.setContentsMargins(0, 0, 0, 0)
         original_layout.addWidget(label("ORIGINAL PDF", "muted"))
-        self.source_view = QLabel("PDF preview")
-        self.source_view.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
-        self.source_view.setStyleSheet("background: #e9eeeb; padding: 8px;")
+        self.source_view = PageCanvas()
+        self.source_view.regionSelected.connect(self.add_region)
         self.source_scroll = QScrollArea()
         self.source_scroll.setWidget(self.source_view)
         self.source_scroll.setWidgetResizable(True)
@@ -248,10 +300,131 @@ class Window(QMainWindow):
         main.addWidget(bottom)
         self.settings_widgets = [self.title_edit, self.author_edit, self.mode, self.quality, self.tables,
                                  self.language, self.pages, self.remove_margins, self.borderless,
-                                 self.override, self.output_edit, self.browse_output, self.open_button]
+                                 self.override, self.output_edit, self.browse_output, self.open_button,
+                                 self.profile, self.save_profile_button, self.preserve_links,
+                                 self.region_button, self.undo_region_button, self.clear_regions_button]
+        self._update_region_controls()
+        for widget in (self.mode, self.quality, self.tables, self.language):
+            widget.currentIndexChanged.connect(self.settings_changed)
+        for widget in (self.remove_margins, self.borderless, self.preserve_links):
+            widget.toggled.connect(self.settings_changed)
+
+    def _preference_values(self):
+        return preferences(Options(mode=self.mode.currentData(), quality=self.quality.currentData(),
+                                   table_mode=self.tables.currentData(), language=self.language.currentData(),
+                                   remove_margins=self.remove_margins.isChecked(),
+                                   detect_borderless=self.borderless.isChecked(),
+                                   preserve_links=self.preserve_links.isChecked()))
+
+    def _set_preferences(self, values):
+        fields = {"mode": self.mode, "quality": self.quality, "table_mode": self.tables, "language": self.language,
+                  "remove_margins": self.remove_margins, "detect_borderless": self.borderless,
+                  "preserve_links": self.preserve_links}
+        for key, value in values.items():
+            widget = fields.get(key)
+            if widget is None:
+                continue
+            widget.blockSignals(True)
+            if isinstance(widget, QComboBox):
+                if widget.findData(value) < 0:
+                    widget.addItem(value, value)
+                widget.setCurrentIndex(widget.findData(value))
+            else:
+                widget.setChecked(value)
+            widget.blockSignals(False)
+
+    def settings_changed(self):
+        self.profile.blockSignals(True)
+        self.profile.setCurrentIndex(self.profile.findData(None))
+        self.profile.blockSignals(False)
+        self._update_region_controls()
+        if self.source:
+            self.review_label.setText("Settings changed. Preview or export again to apply them.")
+
+    def apply_profile(self):
+        key = self.profile.currentData()
+        values = PROFILES.get(key) or self.saved_profiles.get(key)
+        if values:
+            self._set_preferences(values)
+            self._update_region_controls()
+            if self.source:
+                self.review_label.setText("Profile applied. Preview or export again to apply it.")
+
+    def save_profile(self):
+        name, accepted = QInputDialog.getText(self, "Save conversion profile", "Profile name:")
+        if accepted and name.strip():
+            key = "saved:" + name.strip()[:60]
+            self.saved_profiles[key] = self._preference_values()
+            if self.profile.findData(key) < 0:
+                self.profile.addItem(name.strip()[:60], key)
+            self.profile.setCurrentIndex(self.profile.findData(key))
+            self._save_settings()
+
+    def _restore_settings(self):
+        try:
+            values = json.loads(str(self.settings.value("preferences", "{}")))
+            if values:
+                self._set_preferences(checked_preferences(values))
+            saved = json.loads(str(self.settings.value("saved_profiles", "{}")))
+            for key, values in saved.items():
+                if isinstance(key, str) and key.startswith("saved:"):
+                    self.saved_profiles[key] = checked_preferences(values)
+                    self.profile.addItem(key[6:], key)
+            self.profile.blockSignals(True)
+            key = self.settings.value("selected_profile", "balanced")
+            index = self.profile.findData(key)
+            self.profile.setCurrentIndex(index if index >= 0 else self.profile.findData(None))
+            self.profile.blockSignals(False)
+        except (TypeError, ValueError, AttributeError):
+            self.status.setText("Some saved preferences could not be restored.")
+
+    def _save_settings(self):
+        self.settings.setValue("preferences", json.dumps(self._preference_values()))
+        self.settings.setValue("saved_profiles", json.dumps(self.saved_profiles))
+        self.settings.setValue("selected_profile", self.profile.currentData() or "")
+        self.settings.setValue("open_folder", self.open_folder)
+        self.settings.setValue("save_folder", self.save_folder)
+        self.settings.sync()
+
+    def toggle_region_selection(self, enabled):
+        self.source_view.set_selection_enabled(enabled)
+        if enabled:
+            self.review_label.setText("Drag across the original PDF to preserve an area. Intersecting lines, tables and figures are included whole. Preview to inspect the crop.")
+
+    def _update_region_controls(self):
+        count = len(self.page_regions.get(self.current_page, []))
+        enabled = self.document is not None and self.process is None
+        self.region_button.setEnabled(enabled)
+        self.undo_region_button.setEnabled(enabled and count > 0)
+        self.clear_regions_button.setEnabled(enabled and count > 0)
+        self.regions_label.setText(f"{count} selected area{'s' if count != 1 else ''}")
+        self.source_view.set_regions(self.resolved_regions.get(self.current_page, self.page_regions.get(self.current_page, [])))
+
+    def add_region(self, region):
+        if self.document is None or self.process is not None:
+            return
+        self.page_regions.setdefault(self.current_page, []).append(region)
+        self.resolved_regions.pop(self.current_page, None)
+        self.region_button.setChecked(False)
+        self._update_region_controls()
+        self.review_label.setText("Area added. Preview or export again to inspect the preserved region. Full-page image mode already preserves all areas.")
+
+    def undo_region(self):
+        self.resolved_regions.pop(self.current_page, None)
+        regions = self.page_regions.get(self.current_page, [])
+        if regions:
+            regions.pop()
+        self._update_region_controls()
+        self.review_label.setText("Area removed. Preview or export again to apply it.")
+
+    def clear_regions(self):
+        self.page_regions.pop(self.current_page, None)
+        self.resolved_regions.pop(self.current_page, None)
+        self._update_region_controls()
+        self.review_label.setText("Page areas cleared. Preview or export again to apply it.")
 
     def open_pdf(self):
-        path, _ = QFileDialog.getOpenFileName(self, "Open a PDF", "", "PDF documents (*.pdf)")
+        path, _ = QFileDialog.getOpenFileName(self, "Open a PDF", self.open_folder, "PDF documents (*.pdf)")
         if path:
             try:
                 self.load_pdf(path)
@@ -268,11 +441,16 @@ class Window(QMainWindow):
         self.document = document
         self.source = Path(path).resolve()
         self.page_modes = {}
+        self.page_regions = {}
+        self.pages.clear()
+        self.resolved_regions = {}
+        self.open_folder = str(self.source.parent)
+        self.region_button.setChecked(False)
         self.preview_root = None
         self.page_list.clear()
         self.title_edit.setText(document.metadata.get("title", "") or self.source.stem)
         self.author_edit.setText(document.metadata.get("author", ""))
-        self.output_edit.setText(str(self.source.with_suffix(".epub")))
+        self.output_edit.setText(str(Path(self.save_folder) / (self.source.stem + ".epub")) if self.save_folder else str(self.source.with_suffix(".epub")))
         self.file_label.setText(f"{self.source.name}  /  {len(document)} source pages  /  {self.source.stat().st_size / 1024**2:.1f} MiB")
         for index in range(len(document)):
             item = QTreeWidgetItem([str(index + 1), "Not previewed"])
@@ -288,6 +466,7 @@ class Window(QMainWindow):
         if current is None or self.document is None:
             return
         self.current_page = current.data(0, Qt.ItemDataRole.UserRole)
+        self.region_button.setChecked(False)
         self.override.blockSignals(True)
         self.override.setCurrentIndex(self.override.findData(self.page_modes.get(self.current_page)))
         self.override.blockSignals(False)
@@ -302,6 +481,7 @@ class Window(QMainWindow):
         del pix, page
         pymupdf.TOOLS.store_shrink(100)
         self._show_converted_page()
+        self._update_region_controls()
 
     def _show_converted_page(self):
         if self.preview_root:
@@ -324,7 +504,11 @@ class Window(QMainWindow):
                 self.book_view.setHtml(ET.tostring(markup, encoding="unicode"))
                 self.book_view.verticalScrollBar().setValue(0)
                 item = self.page_list.topLevelItem(self.current_page - 1)
-                self.review_label.setText(item.toolTip(1) or "No automatic review flags. Compare content before sending to Kindle.")
+                message = item.toolTip(1) or "No automatic review flags. Compare content before sending to Kindle."
+                summary = item.data(1, Qt.ItemDataRole.UserRole) or {}
+                if self.job_kind == "preview" and summary.get("skipped_links"):
+                    message += " This preview contains one page; links to other chosen pages are restored in a full export."
+                self.review_label.setText(message)
                 return
         self.book_view.setHtml("<p>Click <b>Preview page</b> to convert this page with the current settings.</p>")
         self.review_label.setText("The EPUB content will appear here after a preview or conversion.")
@@ -344,7 +528,8 @@ class Window(QMainWindow):
                           title=self.title_edit.text(), author=self.author_edit.text(),
                           pages=str(self.current_page) if preview else self.pages.text(),
                           remove_margins=self.remove_margins.isChecked(), detect_borderless=self.borderless.isChecked(),
-                          page_modes=self.page_modes.copy())
+                          page_modes=self.page_modes.copy(), preserve_links=self.preserve_links.isChecked(),
+                          page_regions={page: [list(r) for r in regions] for page, regions in self.page_regions.items()})
         options.validate()
         select_pages(options.pages, len(self.document))
         return options
@@ -353,6 +538,8 @@ class Window(QMainWindow):
         path, _ = QFileDialog.getSaveFileName(self, "Save EPUB", self.output_edit.text(), "EPUB books (*.epub)")
         if path:
             self.output_edit.setText(path if Path(path).suffix.lower() == ".epub" else path + ".epub")
+            self.save_folder = str(Path(path).resolve().parent)
+            self._save_settings()
 
     def preview_page(self):
         self._launch(True)
@@ -365,6 +552,10 @@ class Window(QMainWindow):
             return
         try:
             options = self.options(preview)
+            self.region_button.setChecked(False)
+            if not preview:
+                self.save_folder = str(Path(self.output_edit.text()).resolve().parent)
+            self._save_settings()
             if preview:
                 job = tempfile.TemporaryDirectory(prefix="leafpress-preview-")
                 output = Path(job.name) / "preview.epub"
@@ -433,6 +624,7 @@ class Window(QMainWindow):
         self.preview_button.setEnabled(not busy and bool(self.source))
         self.convert_button.setEnabled(not busy and bool(self.source))
         self.cancel_button.setEnabled(busy)
+        self._update_region_controls()
 
     def _read_output(self):
         if not self.process:
@@ -458,11 +650,15 @@ class Window(QMainWindow):
                 self.status.setText(event["message"])
             elif kind == "page":
                 result = event["result"]
+                self.resolved_regions[result["page"]] = result.get("region_bounds", [])
+                if result["page"] == self.current_page:
+                    self.source_view.set_regions(result.get("region_bounds", []))
                 item = self.page_list.topLevelItem(result["page"] - 1)
                 detail = "Image" if result["mode"] == "preserve" else "Hybrid"
                 if result["warnings"]:
                     detail += " / review"
                 item.setText(1, detail)
+                item.setData(1, Qt.ItemDataRole.UserRole, result)
                 item.setToolTip(1, "\n".join(result["warnings"]))
                 self.progress.setValue(round(event["done"] * 100 / event["total"]))
                 self.status.setText(f'Page {result["page"]}: {event["done"]}/{event["total"]}  /  worker peak {event["peak_process_mib"]} MiB')
@@ -540,6 +736,7 @@ class Window(QMainWindow):
         if self.document:
             self.document.close()
             self.document = None
+        self._save_settings()
         if self.job_dir:
             self.job_dir.cleanup()
         event.accept()
