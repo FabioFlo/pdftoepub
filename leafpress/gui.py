@@ -20,31 +20,10 @@ from .page_canvas import PageCanvas
 from .profiles import PROFILES, checked_preferences, preferences
 
 
-STYLE = """
-QMainWindow, QWidget#root { background: #f2f4f3; color: #1e3038; }
-QLabel#brand { font-size: 26px; font-weight: 700; color: #183e40; }
-QLabel#eyebrow { color: #36766a; font-size: 11px; font-weight: 600; }
-QLabel#muted { color: #607278; }
-QFrame#panel { background: white; border: 1px solid #dce3df; border-radius: 10px; }
-QFrame#header { background: transparent; }
-QLineEdit, QComboBox { padding: 7px; border: 1px solid #d2dcda; border-radius: 5px; background: white; color: #1e3038; }
-QLineEdit:focus, QComboBox:focus { border: 1px solid #237a6d; }
-QPushButton { padding: 9px 14px; border: 1px solid #cbd8d4; border-radius: 6px; background: white; color: #22433f; font-weight: 600; }
-QPushButton:hover { background: #edf6f1; }
-QPushButton#primary { background: #216e62; color: white; border: 1px solid #216e62; }
-QPushButton#primary:hover { background: #1b5c52; }
-QPushButton:disabled { background: #ebefed; color: #899792; border-color: #dfe5e1; }
-QProgressBar { border: 0; border-radius: 4px; background: #e4ebe7; min-height: 8px; max-height: 8px; }
-QProgressBar::chunk { background: #2b8473; border-radius: 4px; }
-QTreeWidget { border: 0; background: white; alternate-background-color: #f6f8f6; color: #273c42; }
-QTreeWidget::item { padding: 5px; }
-QTreeWidget::item:selected { background: #e0f0e9; color: #214d41; }
-QHeaderView::section { background: #f4f7f5; padding: 6px; border: 0; color: #526762; }
-QTextBrowser { border: 0; background: white; color: #223338; }
-QScrollArea { border: 0; background: #e9eeeb; }
-QCheckBox { color: #405853; spacing: 7px; }
-QSplitter::handle { background: transparent; width: 10px; }
-"""
+from .themes import COLOURS, palette_for, resolve_theme, stylesheet
+
+
+STYLE = stylesheet("light")
 
 
 def label(text, object_name=""):
@@ -96,6 +75,10 @@ class Window(QMainWindow):
         self.event_poll.timeout.connect(self._read_output)
         self._build()
         self._restore_settings()
+        self.theme.currentIndexChanged.connect(self._theme_changed)
+        QApplication.instance().styleHints().colorSchemeChanged.connect(self._system_theme_changed)
+        self._apply_theme()
+        self._update_layout_help()
 
     def _build(self):
         root = QWidget()
@@ -111,6 +94,13 @@ class Window(QMainWindow):
         header.addLayout(names)
         header.addStretch()
         header.addWidget(label("Keep the text flexible.\nKeep the difficult parts intact.", "muted"))
+        header.addWidget(label("Appearance", "muted"))
+        self.theme = QComboBox()
+        for text, value in (("System", "system"), ("Light", "light"), ("Dark", "dark")):
+            self.theme.addItem(text, value)
+        self.theme.setAccessibleName("Appearance")
+        self.theme.setToolTip("Follow system appearance, or always use Light or Dark. Document colours stay unchanged.")
+        header.addWidget(self.theme)
         self.open_button = QPushButton("Open PDF")
         self.open_button.clicked.connect(self.open_pdf)
         header.addWidget(self.open_button)
@@ -129,15 +119,17 @@ class Window(QMainWindow):
 
         horizontal = QSplitter(Qt.Orientation.Horizontal)
         settings, settings_layout = panel()
-        settings.setMaximumWidth(320)
-        settings.setMinimumWidth(260)
+        settings.setMaximumWidth(390)
+        settings.setMinimumWidth(300)
         settings_layout.addWidget(label("Conversion settings", "eyebrow"))
         preference_content = QWidget()
+        preference_content.setObjectName("preferences")
         preference_layout = QVBoxLayout(preference_content)
         preference_layout.setContentsMargins(0, 0, 0, 0)
         preference_layout.setSpacing(10)
         form = QFormLayout()
-        form.setVerticalSpacing(9)
+        form.setVerticalSpacing(12)
+        form.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapLongRows)
         self.profile = QComboBox()
         self.profile.addItem("Balanced", "balanced")
         self.profile.addItem("Technical", "technical")
@@ -146,8 +138,8 @@ class Window(QMainWindow):
         self.profile.currentIndexChanged.connect(self.apply_profile)
         form.addRow("Profile", self.profile)
         self.mode = QComboBox()
-        self.mode.addItem("Hybrid / reflow", "hybrid")
-        self.mode.addItem("All page images", "preserve")
+        self.mode.addItem("Reflow text + complex content", "hybrid")
+        self.mode.addItem("Preserve pages as images", "preserve")
         self.mode.setToolTip("Hybrid reconstructs paragraphs and simple tables. Preserve keeps page appearance, with image-based text.")
         self.quality = QComboBox()
         self.quality.addItem("Balanced / colour", "balanced")
@@ -173,6 +165,10 @@ class Window(QMainWindow):
             widget.setMinimumHeight(32)
             widget.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
         preference_layout.addLayout(form)
+        self.layout_help = label("", "muted")
+        preference_layout.addWidget(self.layout_help)
+        self.mode.currentIndexChanged.connect(self._update_layout_help)
+        self._update_layout_help()
         self.save_profile_button = QPushButton("Save profile...")
         self.save_profile_button.clicked.connect(self.save_profile)
         preference_layout.addWidget(self.save_profile_button)
@@ -252,6 +248,8 @@ class Window(QMainWindow):
         converted_layout.setContentsMargins(0, 0, 0, 0)
         converted_layout.addWidget(label("EPUB CONTENT / APPROXIMATE DESKTOP VIEW", "muted"))
         self.book_view = QTextBrowser()
+        self.book_view.setObjectName("document")
+        self.book_view.setPalette(palette_for("light"))
         self.book_view.setOpenLinks(False)
         self.book_view.setOpenExternalLinks(False)
         self.book_view.setFont(QFont("Georgia", 12))
@@ -263,7 +261,7 @@ class Window(QMainWindow):
         self.review_label = label("Preview is an approximation. Check the delivered book on Kindle for final layout.", "muted")
         compare_layout.addWidget(self.review_label)
         horizontal.addWidget(comparison)
-        horizontal.setSizes([285, 930])
+        horizontal.setSizes([340, 890])
         main.addWidget(horizontal, 1)
 
         bottom, bottom_layout = panel()
@@ -309,6 +307,27 @@ class Window(QMainWindow):
         for widget in (self.remove_margins, self.borderless, self.preserve_links):
             widget.toggled.connect(self.settings_changed)
 
+    def _update_layout_help(self):
+        self.layout_help.setText("Adjustable text, with tables and formulas preserved where needed."
+                                 if self.mode.currentData() == "hybrid" else
+                                 "Exact page appearance. Text cannot resize; files can be much larger.")
+
+    def _apply_theme(self):
+        choice = self.theme.currentData()
+        self.effective_theme = resolve_theme(choice, QApplication.instance().styleHints().colorScheme())
+        self.setPalette(palette_for(self.effective_theme))
+        self.setStyleSheet(stylesheet(self.effective_theme))
+        self.source_view.set_background(COLOURS[self.effective_theme]["canvas"])
+
+    def _theme_changed(self):
+        self._apply_theme()
+        self.settings.setValue("appearance", self.theme.currentData())
+        self.settings.sync()
+
+    def _system_theme_changed(self, _scheme):
+        if self.theme.currentData() == "system":
+            self._apply_theme()
+
     def _preference_values(self):
         return preferences(Options(mode=self.mode.currentData(), quality=self.quality.currentData(),
                                    table_mode=self.tables.currentData(), language=self.language.currentData(),
@@ -338,6 +357,7 @@ class Window(QMainWindow):
         self.profile.setCurrentIndex(self.profile.findData(None))
         self.profile.blockSignals(False)
         self._update_region_controls()
+        self._update_layout_help()
         if self.source:
             self.review_label.setText("Settings changed. Preview or export again to apply them.")
 
@@ -347,6 +367,7 @@ class Window(QMainWindow):
         if values:
             self._set_preferences(values)
             self._update_region_controls()
+            self._update_layout_help()
             if self.source:
                 self.review_label.setText("Profile applied. Preview or export again to apply it.")
 
@@ -361,6 +382,9 @@ class Window(QMainWindow):
             self._save_settings()
 
     def _restore_settings(self):
+        appearance = self.settings.value("appearance", "system")
+        index = self.theme.findData(appearance)
+        self.theme.setCurrentIndex(index if index >= 0 else 0)
         try:
             values = json.loads(str(self.settings.value("preferences", "{}")))
             if values:
@@ -379,6 +403,7 @@ class Window(QMainWindow):
             self.status.setText("Some saved preferences could not be restored.")
 
     def _save_settings(self):
+        self.settings.setValue("appearance", self.theme.currentData())
         self.settings.setValue("preferences", json.dumps(self._preference_values()))
         self.settings.setValue("saved_profiles", json.dumps(self.saved_profiles))
         self.settings.setValue("selected_profile", self.profile.currentData() or "")
@@ -689,8 +714,8 @@ class Window(QMainWindow):
             if self.job_kind == "export":
                 self.output_path = Path(event["output"])
                 self.folder_button.setEnabled(True)
-                self.status.setText(f'EPUB created  /  {report["output_bytes"] / 1024**2:.2f} MiB  /  '
-                                    f'{report["elapsed_seconds"]:.1f} s  /  {report["review_pages"]} pages to review')
+                self.status.setText(f'<b>EPUB ready · {report["output_bytes"] / 1024**2:.2f} MiB</b><br/>'
+                                    f'{report["elapsed_seconds"]:.1f} s · {report["review_pages"]} pages to review')
             else:
                 self.status.setText(f'Preview ready  /  worker peak {report["peak_process_mib"]} MiB. Change settings and preview again if needed.')
             self._show_converted_page()
@@ -746,7 +771,6 @@ def main():
     app = QApplication.instance() or QApplication(sys.argv[:1])
     app.setApplicationName("LeafPress")
     app.setStyle("Fusion")
-    app.setStyleSheet(STYLE)
     window = Window()
     window.show()
     return app.exec()

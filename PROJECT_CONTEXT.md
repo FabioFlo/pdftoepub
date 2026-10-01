@@ -14,6 +14,12 @@ Manual selections use normalized displayed-page bounds. Intersecting lines/table
 
 GitHub Actions verifies Linux/Windows/macOS and builds a portable Windows folder with a frozen-worker check, source archive and notices. Workflow results remain separate from interactive Windows GUI validation. Linux peak measurements use VmHWM to exclude pre-exec parent memory; large raster fixture generation runs separately from benchmark measurement launchers.
 
+## Appearance and size feedback
+
+Flo traced a roughly 300 MB versus 30 MB output difference to accidentally using full-page image mode instead of Hybrid; link overhead was not the cause. The screenshot then showed a completed Hybrid conversion of 35.20 MiB with Sharp colour images. Keep the existing engine defaults.
+
+Flo authorized System / Light / Dark appearance (System default), saved separately from conversion profiles, following live desktop colour-scheme changes. The interface uses explicit palettes/styles for readable dropdowns, labels, settings backgrounds and scrollbars. Document previews keep their original colours. Layout descriptions clarify full-page image size and non-reflowing text. Local theme checks bring the suite to 40 tests. Native CI and portable packaging must rerun for this update.
+
 ## Engine and verification
 
 Python/PyMuPDF 1.26.x engine, PySide6 Essentials desktop and a separate QProcess worker with UTF-8 event files. Reflowable paragraphs/headings/simple ruled HTML tables, visual crops for difficult tables/notation/diagrams, whole-page fallbacks for scans/slides/rotated or failed reconstruction. Bounded 24-page sampling, one-page processing, capped output rasters, image reuse, disk staging and incremental ZIP writes. Cancellation and rollback retain the previous complete book.

@@ -49,6 +49,37 @@ class GuiTests(unittest.TestCase):
         self.assertIsNone(self.window.process, "Worker did not finish")
         self.assertFalse(self.window.job_error, self.window.job_error)
 
+    def test_theme_choice_restores_without_changing_conversion_options(self):
+        from PySide6.QtGui import QPalette
+        original = self.window._preference_values()
+        self.window.theme.setCurrentIndex(self.window.theme.findData("dark"))
+        self.assertEqual(self.window.effective_theme, "dark")
+        self.assertEqual(self.window._preference_values(), original)
+        self.assertLess(self.window.palette().color(QPalette.Window).lightness(), 60)
+        self.assertGreater(self.window.book_view.palette().color(QPalette.Base).lightness(), 240)
+        self.window.close()
+        restored = Window(self.settings)
+        try:
+            self.assertEqual(restored.theme.currentData(), "dark")
+            restored.theme.setCurrentIndex(restored.theme.findData("light"))
+            self.assertGreater(restored.palette().color(QPalette.Window).lightness(), 240)
+        finally:
+            restored.close()
+
+    def test_system_theme_updates_only_when_system_is_selected(self):
+        from unittest.mock import patch
+        from leafpress.themes import resolve_theme
+        self.assertEqual(resolve_theme("system", Qt.ColorScheme.Dark), "dark")
+        self.assertEqual(resolve_theme("system", Qt.ColorScheme.Light), "light")
+        self.assertEqual(resolve_theme("system", Qt.ColorScheme.Unknown), "light")
+        with patch.object(self.window, "_apply_theme") as apply:
+            self.window._system_theme_changed(Qt.ColorScheme.Dark)
+            apply.assert_called_once()
+        self.window.theme.setCurrentIndex(self.window.theme.findData("light"))
+        with patch.object(self.window, "_apply_theme") as apply:
+            self.window._system_theme_changed(Qt.ColorScheme.Dark)
+            apply.assert_not_called()
+
     def test_preview_table_and_page_override_in_real_worker(self):
         self.window.page_list.setCurrentItem(self.window.page_list.topLevelItem(1))
         self.window.preview_page()

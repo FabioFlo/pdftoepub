@@ -8,6 +8,8 @@ Version 0.2 adds PDF links, nested bookmark navigation, manual region preservati
 
 ![Manual region comparison](docs/desktop-regions.png)
 
+The **Appearance** selector offers **System** (default), **Light**, and **Dark**. System follows desktop appearance changes; a manual choice is remembered separately from conversion profiles. Menus, settings, labels and scrollbars use consistent colours. PDF pixels and the EPUB document preview retain their original colours in every theme. Layout descriptions clarify the difference between adjustable text and full-page images, which can produce much larger files.
+
 ## Start on Windows
 
 1. Extract the ZIP to a normal folder, such as `Documents\LeafPress`. Do not launch files inside the ZIP.

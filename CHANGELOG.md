@@ -2,6 +2,8 @@
 
 ## 0.2.0 - 2026-10-01
 
+- Add remembered System / Light / Dark appearance, live system changes, consistent menu/control contrast, clearer layout guidance and completion status. Document previews retain original colours.
+
 - Restore existing internal PDF links and HTTP/HTTPS/mailto links, retaining text formatting and nearby block destinations. Visual content has adjacent clickable entries.
 - Retain nested bookmark navigation; report excluded/unsupported link targets.
 - Preserve selected regions, expanding intersecting content whole and showing/reporting final crop bounds.

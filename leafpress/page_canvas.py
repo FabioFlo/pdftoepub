@@ -11,12 +11,17 @@ class PageCanvas(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.background = QColor("#e9eeeb")
         self.image = QPixmap()
         self.regions = []
         self.selecting = False
         self.origin = None
         self.current = None
         self.setMinimumSize(200, 200)
+
+    def set_background(self, colour):
+        self.background = QColor(colour)
+        self.update()
 
     def setPixmap(self, image):
         self.image = image
@@ -48,7 +53,7 @@ class PageCanvas(QWidget):
 
     def paintEvent(self, _event):
         painter = QPainter(self)
-        painter.fillRect(self.rect(), QColor("#e9eeeb"))
+        painter.fillRect(self.rect(), self.background)
         bounds = self.image_rect()
         if not self.image.isNull():
             painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
