@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "leafpress"
+version = "0.1.0"
+description = "Offline PDF to EPUB converter with reflowable text and visual fallbacks"
+requires-python = ">=3.10"
+dependencies = ["PyMuPDF>=1.26.6,<1.27"]
+
+[project.optional-dependencies]
+gui = ["PySide6-Essentials>=6.8,<6.11"]
+demo = ["reportlab>=4,<5", "Pillow>=10,<13"]
+build = ["pyinstaller>=6,<7"]
+
+[project.scripts]
+leafpress = "leafpress.cli:main"
+
+[project.gui-scripts]
+leafpress-gui = "leafpress.gui:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["leafpress*"]

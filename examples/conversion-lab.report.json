@@ -1,0 +1,159 @@
+{
+  "application": "LeafPress",
+  "version": "0.1.0",
+  "created_utc": "2026-09-30T21:32:06.892911+00:00",
+  "input": "conversion-lab.pdf",
+  "input_bytes": 56207,
+  "output": "conversion-lab.epub",
+  "output_bytes": 200675,
+  "title": "LeafPress conversion lab",
+  "author": "LeafPress",
+  "source_pages": 7,
+  "converted_pages": 7,
+  "options": {
+    "mode": "hybrid",
+    "quality": "balanced",
+    "table_mode": "auto",
+    "language": "en",
+    "title": "",
+    "author": "",
+    "pages": "",
+    "remove_margins": true,
+    "detect_borderless": false,
+    "page_modes": {}
+  },
+  "elapsed_seconds": 0.25,
+  "peak_process_mib": 63.95,
+  "memory_scope": "conversion process including Python/native PDF engine; GUI excluded",
+  "platform": "linux",
+  "pymupdf_version": "1.26.6",
+  "unique_images": 6,
+  "validation": {
+    "status": "passed",
+    "kind": "local_structure_check",
+    "entries": 19,
+    "spine_documents": 7,
+    "full_epubcheck": false
+  },
+  "totals": {
+    "text_characters": 2455,
+    "html_tables": 1,
+    "table_images": 1,
+    "images": 3,
+    "equation_images": 2,
+    "removed_margin_lines": 10,
+    "removed_margin_images": 0
+  },
+  "preserved_pages": 2,
+  "review_pages": 5,
+  "pages": [
+    {
+      "page": 1,
+      "label": "1",
+      "title": "A readable page",
+      "mode": "hybrid",
+      "text_characters": 628,
+      "html_tables": 0,
+      "table_images": 0,
+      "images": 0,
+      "equation_images": 0,
+      "removed_margin_lines": 2,
+      "removed_margin_images": 0,
+      "warnings": []
+    },
+    {
+      "page": 2,
+      "label": "2",
+      "title": "A simple table",
+      "mode": "hybrid",
+      "text_characters": 302,
+      "html_tables": 1,
+      "table_images": 0,
+      "images": 0,
+      "equation_images": 0,
+      "removed_margin_lines": 2,
+      "removed_margin_images": 0,
+      "warnings": []
+    },
+    {
+      "page": 3,
+      "label": "3",
+      "title": "Merged cells need care",
+      "mode": "hybrid",
+      "text_characters": 259,
+      "html_tables": 0,
+      "table_images": 1,
+      "images": 0,
+      "equation_images": 0,
+      "removed_margin_lines": 2,
+      "removed_margin_images": 0,
+      "warnings": [
+        "A wide, merged, or uncertain table was preserved as an image."
+      ]
+    },
+    {
+      "page": 4,
+      "label": "4",
+      "title": "Equations and diagrams",
+      "mode": "hybrid",
+      "text_characters": 260,
+      "html_tables": 0,
+      "table_images": 0,
+      "images": 1,
+      "equation_images": 2,
+      "removed_margin_lines": 2,
+      "removed_margin_images": 0,
+      "warnings": [
+        "Mathematical notation preserved with image crops; check their placement."
+      ]
+    },
+    {
+      "page": 5,
+      "label": "5",
+      "title": "Two columns, one reading order",
+      "mode": "hybrid",
+      "text_characters": 1006,
+      "html_tables": 0,
+      "table_images": 0,
+      "images": 0,
+      "equation_images": 0,
+      "removed_margin_lines": 2,
+      "removed_margin_images": 0,
+      "warnings": [
+        "Two-column reading order inferred; compare it with the original."
+      ]
+    },
+    {
+      "page": 6,
+      "label": "6",
+      "title": "Page 6",
+      "mode": "preserve",
+      "text_characters": 0,
+      "html_tables": 0,
+      "table_images": 0,
+      "images": 1,
+      "equation_images": 0,
+      "removed_margin_lines": 0,
+      "removed_margin_images": 0,
+      "warnings": [
+        "Large raster page with little body text; preserved visually. OCR is not included in v0.1."
+      ]
+    },
+    {
+      "page": 7,
+      "label": "7",
+      "title": "Page 7",
+      "mode": "preserve",
+      "text_characters": 0,
+      "html_tables": 0,
+      "table_images": 0,
+      "images": 1,
+      "equation_images": 0,
+      "removed_margin_lines": 0,
+      "removed_margin_images": 0,
+      "warnings": [
+        "Landscape/slide layout preserved visually."
+      ]
+    }
+  ]
+}

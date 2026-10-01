@@ -1,0 +1,30 @@
+test_cancel_during_sidecar_install_rolls_back (test_conversion.ConversionTests.test_cancel_during_sidecar_install_rolls_back) ... ok
+test_cancel_keeps_existing_book_and_sidecars (test_conversion.ConversionTests.test_cancel_keeps_existing_book_and_sidecars) ... ok
+test_column_order_is_left_then_right (test_conversion.ConversionTests.test_column_order_is_left_then_right) ... ok
+test_epub_package_and_navigation (test_conversion.ConversionTests.test_epub_package_and_navigation) ... ok
+test_equations_and_arrows_appear_once (test_conversion.ConversionTests.test_equations_and_arrows_appear_once) ... ok
+test_image_tables_option (test_conversion.ConversionTests.test_image_tables_option) ... ok
+test_invalid_ranges_and_inputs_do_not_create_output (test_conversion.ConversionTests.test_invalid_ranges_and_inputs_do_not_create_output) ... ok
+test_keep_margins_option (test_conversion.ConversionTests.test_keep_margins_option) ... ok
+test_merged_table_preserves_visual_layout (test_conversion.ConversionTests.test_merged_table_preserves_visual_layout) ... ok
+test_metadata_is_escaped_and_invalid_xml_characters_removed (test_conversion.ConversionTests.test_metadata_is_escaped_and_invalid_xml_characters_removed) ... ok
+test_page_override_and_original_page_numbers (test_conversion.ConversionTests.test_page_override_and_original_page_numbers) ... ok
+test_preview_and_full_conversion_use_same_margin_rules (test_conversion.ConversionTests.test_preview_and_full_conversion_use_same_margin_rules) ... ok
+test_refuse_overwrite_and_unowned_preview (test_conversion.ConversionTests.test_refuse_overwrite_and_unowned_preview) ... ok
+test_repeated_footer_image_removed_but_distinct_image_kept (test_conversion.ConversionTests.test_repeated_footer_image_removed_but_distinct_image_kept) ... ok
+test_repeated_images_are_reused (test_conversion.ConversionTests.test_repeated_images_are_reused) ... ok
+test_rotated_page_keeps_visual_orientation (test_conversion.ConversionTests.test_rotated_page_keeps_visual_orientation) ... ok
+test_scan_and_slide_are_preserved_and_flagged (test_conversion.ConversionTests.test_scan_and_slide_are_preserved_and_flagged) ... ok
+test_simple_table_retains_exact_cell_mapping (test_conversion.ConversionTests.test_simple_table_retains_exact_cell_mapping) ... ok
+test_validator_rejects_broken_image_reference (test_conversion.ConversionTests.test_validator_rejects_broken_image_reference) ... ok
+test_word_style_leading_and_first_line_indent_reflow (test_conversion.ConversionTests.test_word_style_leading_and_first_line_indent_reflow) ... ok
+test_wrapped_lines_are_one_paragraph (test_conversion.ConversionTests.test_wrapped_lines_are_one_paragraph) ... ok
+test_cancel_worker_and_clean_staging (test_gui.GuiTests.test_cancel_worker_and_clean_staging) ... ok
+test_export_and_reopen_pages (test_gui.GuiTests.test_export_and_reopen_pages) ... ok
+test_preview_table_and_page_override_in_real_worker (test_gui.GuiTests.test_preview_table_and_page_override_in_real_worker) ... ok
+
+----------------------------------------------------------------------
+Ran 24 tests in 2.252s
+
+OK
+Consider using the pymupdf_layout package for a greatly improved page layout analysis.

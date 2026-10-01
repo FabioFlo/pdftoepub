@@ -1,0 +1,94 @@
+[
+  {
+    "input": "conversion-lab.pdf",
+    "input_bytes": 56207,
+    "converted_pages": 7,
+    "output_bytes": 200675,
+    "elapsed_seconds": 0.291,
+    "peak_process_mib": 63.95,
+    "preserved_pages": 2,
+    "review_pages": 5,
+    "unique_images": 6,
+    "totals": {
+      "text_characters": 2455,
+      "html_tables": 1,
+      "table_images": 1,
+      "images": 3,
+      "equation_images": 2,
+      "removed_margin_lines": 10,
+      "removed_margin_images": 0
+    },
+    "platform": "linux",
+    "pymupdf_version": "1.26.6",
+    "memory_scope": "conversion process including Python/native PDF engine; GUI excluded"
+  },
+  {
+    "input": "RelIns_Pegaso.pdf",
+    "input_bytes": 915475,
+    "converted_pages": 19,
+    "output_bytes": 1926216,
+    "elapsed_seconds": 5.823,
+    "peak_process_mib": 97.7,
+    "preserved_pages": 1,
+    "review_pages": 18,
+    "unique_images": 370,
+    "totals": {
+      "text_characters": 17691,
+      "html_tables": 1,
+      "table_images": 2,
+      "images": 17,
+      "equation_images": 416,
+      "removed_margin_lines": 72,
+      "removed_margin_images": 17
+    },
+    "platform": "linux",
+    "pymupdf_version": "1.26.6",
+    "memory_scope": "conversion process including Python/native PDF engine; GUI excluded"
+  },
+  {
+    "input": "IntProSof_Pegaso.pdf",
+    "input_bytes": 1241614,
+    "converted_pages": 24,
+    "output_bytes": 1912759,
+    "elapsed_seconds": 2.652,
+    "peak_process_mib": 94.2,
+    "preserved_pages": 4,
+    "review_pages": 7,
+    "unique_images": 17,
+    "totals": {
+      "text_characters": 33636,
+      "html_tables": 0,
+      "table_images": 0,
+      "images": 14,
+      "equation_images": 5,
+      "removed_margin_lines": 100,
+      "removed_margin_images": 20
+    },
+    "platform": "linux",
+    "pymupdf_version": "1.26.6",
+    "memory_scope": "conversion process including Python/native PDF engine; GUI excluded"
+  },
+  {
+    "input": "stress-350.pdf",
+    "input_bytes": 2690914,
+    "converted_pages": 350,
+    "output_bytes": 429806,
+    "elapsed_seconds": 12.157,
+    "peak_process_mib": 67.6,
+    "preserved_pages": 100,
+    "review_pages": 250,
+    "unique_images": 6,
+    "totals": {
+      "text_characters": 122750,
+      "html_tables": 50,
+      "table_images": 50,
+      "images": 150,
+      "equation_images": 100,
+      "removed_margin_lines": 500,
+      "removed_margin_images": 0
+    },
+    "platform": "linux",
+    "pymupdf_version": "1.26.6",
+    "memory_scope": "conversion process including Python/native PDF engine; GUI excluded"
+  }
+]
