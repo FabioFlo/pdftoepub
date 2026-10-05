@@ -19,17 +19,27 @@ A personal, offline desktop tool for converting PDFs into EPUBs for Kindle and o
 | Manual corrections | Preserve a selected region or an entire problem page |
 | Everyday use | Comparison preview, saved profiles, remembered folders, cancellation and System / Light / Dark themes |
 
-## Start on Windows: portable app
+## Download and open the app
 
-This is the simplest option and **does not require installing Python**.
+**No Python, Git or programming knowledge is required.** Choose the download for your computer:
 
-1. Open the repository's [Actions page](https://github.com/FabioFlo/pdftoepub/actions).
-2. Choose a **successful** run of **Verify and build PdfToEpub converter**.
-3. Download **PdfToEpubConverter-0.2.0-Windows-portable** from the run's **Artifacts** section. GitHub may require you to sign in. Artifacts are retained for 30 days.
-4. Extract the entire ZIP into a normal folder, for example `Documents\PdfToEpubConverter`.
-5. Open **`PdfToEpubConverter.exe`**. Keep the executable and its accompanying files together; do not launch it from inside the ZIP.
+| Computer | Download | Open after extracting |
+| --- | --- | --- |
+| Windows 10/11, 64-bit Intel/AMD | [Download for Windows](https://github.com/FabioFlo/pdftoepub/releases/latest/download/PdfToEpubConverter-Windows-x64.zip) | `PdfToEpubConverter.exe` |
+| Mac with Apple Silicon (M1/M2/M3/M4 and newer), macOS 15+ | [Download for Apple Silicon Mac](https://github.com/FabioFlo/pdftoepub/releases/latest/download/PdfToEpubConverter-macOS-arm64.zip) | `PdfToEpubConverter.app` |
+| Mac with Intel processor, macOS 15+ | [Download for Intel Mac](https://github.com/FabioFlo/pdftoepub/releases/latest/download/PdfToEpubConverter-macOS-x64.zip) | `PdfToEpubConverter.app` |
+| Ubuntu desktop 22.04+, 64-bit Intel/AMD | [Download for Ubuntu](https://github.com/FabioFlo/pdftoepub/releases/latest/download/PdfToEpubConverter-Ubuntu-x64.tar.gz) | `PdfToEpubConverter` |
 
-GitHub's **Code → Download ZIP** contains the source, not the portable executable. Use the source instructions below for that download. If an artifact has expired, a new successful workflow run can generate another one.
+Downloads are public: no GitHub account is needed. You can also browse [all releases](https://github.com/FabioFlo/pdftoepub/releases). The listed architectures are native builds; Windows ARM and Linux ARM packages are not included.
+
+1. Download and **extract the whole archive** using your computer's file manager.
+2. **Windows:** open the `.exe` inside the extracted folder. Keep the accompanying files together.
+3. **macOS:** move the `.app` to Applications, then open it. To identify your Mac, use Apple menu → About This Mac. These personal builds are not notarized; if macOS blocks opening, attempt to open the app, then use System Settings → Privacy & Security → Open Anyway.
+4. **Ubuntu:** open the `PdfToEpubConverter` program inside its extracted folder. Keep the accompanying files together. If needed, allow execution in the file's Properties → Permissions; you can also launch it with `./PdfToEpubConverter` from that folder.
+
+Conversion runs locally. Each download includes instructions, sample documents, source code and license notices. Linux packages still use your desktop's system libraries; other distributions and older macOS versions are not covered by these builds. If Ubuntu reports missing desktop libraries, see the troubleshooting section below.
+
+GitHub's **Code → Download ZIP** contains source code, not a ready-to-open app. Source installation instructions are further down this page.
 
 ## Your first conversion
 
@@ -152,6 +162,7 @@ PDF structure and reading order are inferred. Review flags help identify uncerta
 | Scanned text cannot be selected | Scans are image-based; OCR is not available |
 | A cross-page link is missing from a preview | One-page previews exclude other-page destinations; export all relevant pages to restore the link |
 | A PDF will not open because it is encrypted | Provide an unlocked local copy |
+| Ubuntu reports missing Qt/XCB libraries | Install the missing library; common packages are `libxcb-cursor0` and `libxkbcommon-x11-0` |
 | An older preview folder cannot be replaced | Choose a fresh output filename; previews from earlier-name builds use different markers |
 
 Conversion processes one page at a time in a separate worker, caps rendered images, reuses identical assets and stages EPUB resources on disk. This keeps memory manageable for tested documents, but does not impose a hard RAM limit on arbitrary PDF decoding. Details and measured workloads are in [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
@@ -165,7 +176,7 @@ python tools/benchmark.py --stress-repeat 50
 python tools/benchmark.py --unique-image-pages 12 60
 ```
 
-GitHub Actions runs tests on Windows, macOS and Linux, then builds the portable Windows app and checks its packaged conversion worker. GUI tests use Qt's offscreen platform; interactive device testing remains separate. The local `check` command validates package structure and resource links. Full EPUB conformance can be checked with [EPUBCheck](https://github.com/w3c/epubcheck).
+GitHub Actions runs native tests, builds Windows, Apple Silicon/Intel Mac and Ubuntu downloads, and checks each packaged conversion worker and desktop startup. Public release assets are published only after all download jobs pass. Existing versioned release assets are retained; developers must bump `pyproject.toml` to publish a new version. GUI tests use Qt's offscreen platform; interactive device testing remains separate. The local `check` command validates package structure and resource links. Full EPUB conformance can be checked with [EPUBCheck](https://github.com/w3c/epubcheck).
 
 - [Changes](CHANGELOG.md)
 - [Sample conversion expectations](examples/EXPECTED_RESULTS.md)

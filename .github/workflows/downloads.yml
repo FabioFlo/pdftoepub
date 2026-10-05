@@ -1,0 +1,94 @@
+name: Build public downloads
+
+on:
+  pull_request:
+    paths: ['.github/workflows/downloads.yml', 'tools/package_portable.py', 'tools/check_frozen.py', 'pdftoepub/**', 'pyproject.toml', 'launcher.py']
+  push:
+    branches: [main]
+    paths: ['.github/workflows/downloads.yml', 'tools/package_portable.py', 'tools/check_frozen.py', 'pdftoepub/**', 'pyproject.toml', 'launcher.py']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: public-downloads-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  portable:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: Windows-x64
+            runner: windows-2022
+            executable: dist/PdfToEpubConverter/PdfToEpubConverter.exe
+          - platform: macOS-arm64
+            runner: macos-15
+            executable: dist/PdfToEpubConverter.app/Contents/MacOS/PdfToEpubConverter
+          - platform: macOS-x64
+            runner: macos-15-intel
+            executable: dist/PdfToEpubConverter.app/Contents/MacOS/PdfToEpubConverter
+          - platform: Ubuntu-x64
+            runner: ubuntu-22.04
+            executable: dist/PdfToEpubConverter/PdfToEpubConverter
+    runs-on: ${{ matrix.runner }}
+    env:
+      QT_QPA_PLATFORM: offscreen
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Linux desktop dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libxcb-cursor0 libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 libxcb-xinerama0
+      - run: python -m pip install -e ".[gui,build,demo]"
+      - run: python -m unittest discover -s tests -v
+      - run: python -m PyInstaller --noconfirm --clean --onedir --windowed --name PdfToEpubConverter --collect-all pymupdf --hidden-import pdftoepub.gui launcher.py
+      - run: python tools/package_portable.py ${{ matrix.platform }}
+      - run: python tools/check_frozen.py ${{ matrix.executable }} examples/conversion-lab.pdf
+      - uses: actions/upload-artifact@v4
+        with:
+          name: download-${{ matrix.platform }}
+          path: downloads/*
+          if-no-files-found: error
+          retention-days: 30
+
+  publish:
+    needs: portable
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: download-*
+          merge-multiple: true
+          path: downloads
+      - name: Publish versioned release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          version=$(python3 -c 'import re; print(re.search(r"^version = \"([^\"]+)\"", open("pyproject.toml").read(), re.M).group(1))')
+          tag="v${version}"
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $tag already exists; published assets are kept. Bump the project version for a new release."
+            exit 0
+          fi
+          (cd downloads && sha256sum *.zip *.tar.gz > SHA256SUMS.txt)
+          cat > release-notes.md <<'NOTES'
+          Standalone downloads for PdfToEpub converter. No Python installation is required.
+
+          - Windows x64: extract the ZIP and open PdfToEpubConverter.exe.
+          - macOS: choose Apple Silicon (arm64) or Intel (x64), extract, and move the .app to Applications. Builds are ad-hoc signed, not notarized; macOS may require Open Anyway in Privacy & Security.
+          - Ubuntu x64: extract the tar.gz and open PdfToEpubConverter inside its folder. Built on Ubuntu 22.04; other Linux distributions are not certified.
+
+          Each package includes examples, instructions, source and license notices. Native automated tests, packaged conversion and desktop startup checks passed. Interactive device/desktop behavior still needs real-user testing.
+          NOTES
+          gh release create "$tag" downloads/* --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "PdfToEpub converter $version" --notes-file release-notes.md

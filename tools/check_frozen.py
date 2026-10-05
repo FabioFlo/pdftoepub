@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import time
 from pathlib import Path
 import subprocess
 import tempfile
@@ -30,7 +32,25 @@ def main():
         if run.returncode or not any(event.get("type") == "complete" for event in emitted):
             raise RuntimeError(f"Frozen worker failed ({run.returncode}): {emitted[-3:]} {run.stderr[-2000:]!r}")
         validation = validate_epub(output)
-        print(json.dumps({"frozen_worker": "passed", "validation": validation}))
+        # Also exercise Qt startup in the packaged app; worker-only checks do
+        # not catch missing desktop plugins or GUI modules.
+        environment = dict(os.environ, QT_QPA_PLATFORM="offscreen")
+        gui = subprocess.Popen([str(args.executable.resolve()), "gui"], env=environment,
+                               stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+        try:
+            time.sleep(3)
+            if gui.poll() is not None:
+                error = gui.communicate()[1]
+                raise RuntimeError(f"Frozen desktop exited during startup: {error[-2000:]!r}")
+        finally:
+            if gui.poll() is None:
+                gui.terminate()
+                try:
+                    gui.communicate(timeout=10)
+                except subprocess.TimeoutExpired:
+                    gui.kill()
+                    gui.communicate()
+        print(json.dumps({"frozen_worker": "passed", "desktop_startup": "passed", "validation": validation}))
 
 
 if __name__ == "__main__":
