@@ -1,6 +1,6 @@
 # PdfToEpub converter
 
-A personal, offline desktop tool for converting PDFs into EPUBs for Kindle and other ebook readers. It keeps ordinary text adjustable and preserves difficult tables, formulas and illustrations visually where needed.
+A personal, offline desktop tool for converting PDFs into EPUBs for compatible ebook readers and reading apps. Kindle is one example; the converter is not tied to a particular device or service. It keeps ordinary text adjustable and preserves difficult tables, formulas and illustrations visually where needed.
 
 **Version:** 0.2.0 · **Desktop:** Windows, macOS and Linux · **Conversion:** local, with no account, API key or conversion service.
 
@@ -57,11 +57,17 @@ GitHub's **Code → Download ZIP** contains source code, not a ready-to-open app
 
 Changing settings does not update an existing preview or export automatically: preview or create the EPUB again.
 
-## Reading on Kindle
+## Reading your EPUB
+
+Open the generated `.epub` in a compatible reading app, or transfer it to your ebook reader using that device's supported method. Rendering and link support can vary, so review the book in your intended reader.
+
+### Kindle example
 
 Send the `.epub` through [Send to Kindle](https://www.amazon.com/sendtokindle). The web uploader accepts files up to **200 MB**; other delivery methods can have different limits. Inspect the delivered book on the device, especially wide tables, mathematical notation and navigation.
 
-The desktop comparison is an approximate EPUB preview, not a Kindle emulator. Image content may need zooming, while reflowable text can use the reader's font-size controls. EPUB support and link behavior vary between readers.
+The **200 MB** limit above belongs to Send to Kindle's web uploader; it is not a general EPUB limit or a limit imposed by this converter.
+
+The desktop comparison is an approximate EPUB preview, not an emulator of any particular reader. Image content may need zooming, while reflowable text can use the reader's font-size controls. EPUB support and link behavior vary between readers.
 
 ## Settings and manual corrections
 
