@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleased
+## 0.2.1 - 2026-10-28
 
 - Reject borderless-table candidates that cut through prose or lack clear column gutters, keeping ordinary paragraphs adjustable.
 - Recover separate ruled-table headings when only the header separators are missing; keep genuinely merged tables visual.
