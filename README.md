@@ -2,7 +2,7 @@
 
 A personal, offline desktop tool for converting PDFs into EPUBs for compatible ebook readers and reading apps. Kindle is one example; the converter is not tied to a particular device or service. It keeps ordinary text adjustable and preserves difficult tables, formulas and illustrations visually where needed.
 
-**Version:** 0.2.0 · **Desktop:** Windows, macOS and Linux · **Conversion:** local, with no account, API key or conversion service.
+**Version:** 0.2.1 · **Desktop:** Windows, macOS and Linux · **Conversion:** local, with no account, API key or conversion service.
 
 ![PDF and EPUB comparison with a manually preserved region](docs/desktop-regions.png)
 

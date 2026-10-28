@@ -1,5 +1,13 @@
 # Changes
 
+## 0.2.1 - 2026-10-28
+
+- Reject borderless-table candidates that cut through prose or lack clear column gutters, keeping ordinary paragraphs adjustable.
+- Recover separate ruled-table headings when only the header separators are missing; keep genuinely merged tables visual.
+- Let HTML table cells rewrap naturally and avoid treating an incomplete continuation row as a header. Table fragments remain on their original source pages.
+- Keep separately encoded Symbol-font list markers with their prose instead of rendering them as mathematical images.
+- Preserve local Fit/FitH PDF destinations that MuPDF exposes as named links, including page selection and finite-coordinate handling.
+
 ## 0.2.0 - 2026-10-01
 
 - Rename the personal tool to PdfToEpub converter, including package/CLI, portable executable, sample content, screenshots and build artifacts. New-name application settings start with defaults.

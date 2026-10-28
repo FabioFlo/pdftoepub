@@ -6,6 +6,7 @@ ordinary adjacent link list rather than reader-dependent clickable overlays.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 from urllib.parse import urlsplit
 
 import pymupdf
@@ -44,13 +45,31 @@ class LinkMap:
             page = document[index]
             links = []
             skipped = 0
-            for annotation in page.get_links():
+            annotations = page.get_links()
+            # Fit/FitH destinations can be reported as LINK_NAMED, with a
+            # one-based page string instead of LINK_GOTO's zero-based page.
+            # Let MuPDF resolve its own local URI rather than guessing offsets
+            # or parsing PDF objects. Never resolve remote/file/action links.
+            local_uris = {}
+            if any(a["kind"] == pymupdf.LINK_NAMED for a in annotations):
+                link = page.first_link
+                while link:
+                    if link.uri and link.uri.startswith("#"):
+                        local_uris[link.xref] = link.uri
+                    link = link.next
+            for annotation in annotations:
                 rect = pymupdf.Rect(annotation["from"])
                 kind = annotation["kind"]
                 href = ""
-                if kind == pymupdf.LINK_GOTO and annotation.get("page") in selected_set:
-                    target_page = annotation["page"] + 1
-                    point = pymupdf.Point(annotation.get("to", (0, 0)))
+                target = annotation.get("page") if kind == pymupdf.LINK_GOTO else None
+                point = pymupdf.Point(annotation.get("to") or (0, 0))
+                if kind == pymupdf.LINK_NAMED and annotation.get("xref") in local_uris:
+                    target, x, y = document.resolve_link(local_uris[annotation["xref"]])
+                    # Fit views have no explicit coordinates (NaN in MuPDF).
+                    point = pymupdf.Point(x if math.isfinite(x) else 0,
+                                          y if math.isfinite(y) else 0)
+                if isinstance(target, int) and target in selected_set:
+                    target_page = target + 1
                     key = (target_page, round(point.x, 2), round(point.y, 2))
                     anchor = destinations.get(key)
                     if anchor is None:
