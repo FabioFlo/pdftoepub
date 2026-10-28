@@ -17,6 +17,7 @@ from .links import PageLinks
 TEXT_FLAGS = pymupdf.TEXTFLAGS_DICT & ~pymupdf.TEXT_PRESERVE_IMAGES
 MATH_FONT = re.compile(r"math|symbol|cmsy|cmex|cmmi|stix|msam|msbm", re.I)
 MATH_SYMBOLS = set("∫∑∏√∞∂∇≈≠≤≥∈∉⊂⊆∪∩⇒⇔∀∃⊗⊕")
+LIST_MARKERS = {"•", "●", "▪"}
 
 
 @dataclass
@@ -147,6 +148,42 @@ def merge_regions(regions: list[pymupdf.Rect], bounds: pymupdf.Rect) -> list[pym
     return merged
 
 
+def separated_columns(words, edges, minimum_gap: float) -> bool:
+    """Require actual whitespace gutters, not boundaries through prose words."""
+    for edge in edges:
+        if any(word[0] + 1 < edge < word[2] - 1 for word in words):
+            return False
+        left = [word[2] for word in words if word[2] <= edge + 1]
+        right = [word[0] for word in words if word[0] >= edge - 1]
+        if not left or not right or min(right) - max(left) < minimum_gap:
+            return False
+    return True
+
+
+def table_text(text: str) -> str:
+    # PDF line wraps are not semantic breaks inside ordinary table cells.
+    text = re.sub(r"([^\W\d_])-\s*\n\s*([a-zà-öø-ÿ])", r"\1\2", text)
+    return " ".join(text.split())
+
+
+def attach_list_markers(lines: list[Line], body_size: float) -> list[Line]:
+    # Word can place Symbol-font bullets in separate text blocks, after all
+    # paragraphs in PDF order. Attach them geometrically before math detection.
+    output = list(lines)
+    for marker in lines:
+        if marker.text not in LIST_MARKERS:
+            continue
+        candidates = [line for line in output if line is not marker and
+                      0 <= line.rect.x0 - marker.rect.x1 <= body_size * 2 and
+                      abs((line.rect.y0 + line.rect.y1 - marker.rect.y0 - marker.rect.y1) / 2) < body_size * 0.5]
+        if candidates:
+            line = min(candidates, key=lambda line: line.rect.x0)
+            output[output.index(line)] = Line(line.rect | marker.rect, marker.spans + line.spans,
+                                              line.block, line.direction)
+            output.remove(marker)
+    return output
+
+
 class PageExtractor:
     def __init__(self, writer: EpubWriter, options: Options, repeated: set[str], body_size: float,
                  repeated_images: set[str] | None = None, link_map=None):
@@ -197,7 +234,7 @@ class PageExtractor:
             return self._preserve(page, result, "Rotated page preserved visually; review its reading orientation.")
         if page.rect.width / max(1, page.rect.height) > 1.25:
             return self._preserve(page, result, "Landscape/slide layout preserved visually.")
-        all_lines = lines_on(page, with_characters=bool(self.links.links))
+        all_lines = attach_list_markers(lines_on(page, with_characters=bool(self.links.links)), self.body_size)
         manual = [pymupdf.Rect(page.rect.x0 + r[0] * page.rect.width,
                                page.rect.y0 + r[1] * page.rect.height,
                                page.rect.x0 + r[2] * page.rect.width,
@@ -361,6 +398,29 @@ class PageExtractor:
             rows = table.extract()
             if sum(bool(cell and cell.strip()) for row in rows for cell in row) < 3:
                 continue
+            if borderless:
+                # The text strategy partitions justified prose into a grid,
+                # often even slicing individual words into multiple cells.
+                # Such a candidate must not exclude adjustable body text.
+                edges = sorted({cell[0] for cell in table.cells if cell is not None})[1:]
+                words = page.get_text("words", clip=pymupdf.Rect(table.bbox))
+                if not separated_columns(words, edges, self.body_size * 0.6):
+                    continue
+            elif (table.row_count >= 3 and rows[0][0] is not None and
+                  all(cell is None for cell in rows[0][1:]) and
+                  all(cell is not None for row in rows[1:] for cell in row)):
+                # Word/PDF exports sometimes omit only the header separators.
+                # Recover independent headings only when every body column has
+                # header text and wide gutters; a real merged title stays visual.
+                first = pymupdf.Rect(table.rows[0].cells[0])
+                columns = table.rows[1].cells
+                words = page.get_text("words", clip=first)
+                edges = [cell[0] for cell in columns[1:]]
+                headings = [page.get_textbox(pymupdf.Rect(cell[0], first.y0, cell[2], first.y1)).strip()
+                            for cell in columns]
+                if all(headings) and separated_columns(words, edges, self.body_size):
+                    rows[0] = headings
+                    result.warnings.append("Table header separators inferred from aligned body columns; review the headings.")
             rect = padded(pymupdf.Rect(table.bbox), 1.5, page.rect)
             external = bool(table.header.external)
             if external:
@@ -384,21 +444,25 @@ class PageExtractor:
                     row_html.append("<tr>" + "".join(f'<th scope="col">{esc(name or "")}</th>'
                                                     for name in table.header.names) + "</tr>")
                 for index, row in enumerate(rows):
-                    tag = "th" if index == 0 and not external else "td"
+                    # A table continued on a new PDF page may start with the
+                    # remainder of a data row, including empty cells.
+                    tag = "th" if index == 0 and not external and all(row) else "td"
                     attrs = ' scope="col"' if tag == "th" else ""
-                    cells = "".join(f'<{tag}{attrs}>{esc(cell or "").replace(chr(10), "<br/>")}</{tag}>'
+                    cells = "".join(f'<{tag}{attrs}>{esc(table_text(cell or ""))}</{tag}>'
                                     for cell in row)
                     row_html.append(f"<tr>{cells}</tr>")
                 content = "<table>" + "".join(row_html) + "</table>"
                 result.html_tables += 1
             regions.append(rect)
             items.append((rect, content))
-        if borderless:
+        if borderless and regions:
             result.warnings.append("Experimental borderless-table detection was used; review this page.")
         return regions, items
 
     def _math_line(self, line: Line) -> bool:
         text = line.text
+        if text in LIST_MARKERS:
+            return False
         if all(span["flags"] & 8 for span in line.spans):
             return False
         math_chars = sum(len(span["text"].strip()) for span in line.spans
@@ -445,7 +509,8 @@ class PageExtractor:
         index = 0
         while index < len(spans):
             span = spans[index]
-            if MATH_FONT.search(span["font"]) and span["text"].strip():
+            if (MATH_FONT.search(span["font"]) and span["text"].strip() and
+                span["text"].strip() not in LIST_MARKERS):
                 rect = pymupdf.Rect(span["bbox"])
                 alt = span["text"]
                 # Adjacent mathematical spans form one crop; whitespace belongs

@@ -46,3 +46,12 @@ Flo asked whether the extension can benefit from the quality/size improvements. 
 4. Consider optional OCR and batch conversion after this baseline is stable.
 
 AGPL v3 or later. Conversion performs no network requests; setup/CI download dependencies.
+
+
+## 2026-10-28 conversion regression fixes (PR candidate)
+
+Branch `fix/reflow-tables-and-fit-links` rejects text-detector grids without real whitespace gutters or that cut across words; these no longer exclude prose from reflow. It repairs a missing full-width header separator only when body columns, separate headings and wide whitespace agree. True merged cells and uncertain tables retain visual fallbacks. PDF line wraps inside HTML table cells become spaces; an incomplete first row is data, not a column header. Table fragments remain on their source pages: cross-page row/table merging is not implemented. Separately encoded Symbol bullets attach to their adjacent prose line before mathematical detection.
+
+Direct `/Dest [... /Fit]` and `/A /D [... /FitH ...]` links can be exposed by MuPDF 1.26.x as LINK_NAMED with a one-based page string. Local link URIs are resolved through Document.resolve_link, retaining zero-based destination semantics and normalizing unspecified Fit coordinates. File, remote and unsupported actions remain excluded. Existing XYZ block destination behavior is retained.
+
+Regression tests use synthetic content only. Keep user-supplied documents, extracted text and document-derived measurements out of public repository files and PR descriptions. Validation uses six new regression tests plus the existing suite and native CI. Interactive Kindle behavior remains to be checked. No stable release or merge is implied by this investigation.

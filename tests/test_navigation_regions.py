@@ -80,6 +80,41 @@ class NavigationRegionTests(unittest.TestCase):
         self.assertIn("outside selected pages", " ".join(report["pages"][0]["warnings"]))
         validate_epub(self.output)
 
+    def make_fit_links(self):
+        # Fit/FitH are valid local destinations that MuPDF 1.26.x exposes as
+        # LINK_NAMED instead of LINK_GOTO. Exercise both direct /Dest and /A /D.
+        with pymupdf.open(self.source) as doc:
+            page = doc[0]
+            links = page.get_links()
+            target = doc.page_xref(1)
+            doc.xref_set_key(links[0]["xref"], "A", "null")
+            doc.xref_set_key(links[0]["xref"], "Dest", f"[{target} 0 R /Fit]")
+            target = doc.page_xref(2)
+            doc.xref_set_key(links[2]["xref"], "A", f"<</S/GoTo/D[{target} 0 R/FitH null]>>")
+            doc.save(self.root / "fit.pdf")
+        self.source = self.root / "fit.pdf"
+
+    def test_fit_view_links_resolve_to_correct_source_pages(self):
+        self.make_fit_links()
+        report = convert(self.source, self.output)
+        anchors = list(self.markup(1).iter(XHTML + "a"))
+        self.assertEqual(["".join(a.itertext()) for a in anchors],
+                         ["CLICK_SECTION", "WEBSITE", "EXCLUDED_SECTION"])
+        for anchor, target in [(anchors[0], 2), (anchors[2], 3)]:
+            filename, fragment = anchor.attrib["href"].split("#")
+            self.assertEqual(filename, f"page-{target:05d}.xhtml")
+            self.assertTrue(any(e.attrib.get("id") == fragment for e in self.markup(target).iter()))
+        self.assertEqual(report["totals"]["internal_links"], 3)
+        self.assertEqual(report["totals"]["skipped_links"], 0)
+        validate_epub(self.output)
+
+    def test_fit_links_still_respect_selected_pages(self):
+        self.make_fit_links()
+        report = convert(self.source, self.output, Options(pages="1-2"))
+        self.assertEqual(report["totals"]["skipped_links"], 1)
+        self.assertEqual(len(list(self.markup(1).iter(XHTML + "a"))), 2)
+        validate_epub(self.output)
+
     def test_preserved_page_links_remain_available(self):
         report = convert(self.source, self.output, Options(mode="preserve"))
         self.assertEqual(report["totals"]["internal_links"], 3)
